@@ -15,17 +15,30 @@
             _random = new Random(seed);
         }
 
+        /// <summary>
+        /// Reset the maze
+        /// </summary>
+
         public void Reset()
         {
             _cells.Reset();
         }
 
+        /// <summary>
+        /// Set the starting point for the generation
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
         public void SetStartingPoint(int x, int y)
         {
             _track.Clear();
             _track.Push(_cells[x, y]);
         }
 
+        /// <summary>
+        /// Generate the maze
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public void Generate()
         {
             while (_track.Any())
@@ -70,6 +83,12 @@
             }
         }
 
+        /// <summary>
+        /// Check if there is a valid move from the current cell
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <param name="move"></param>
+        /// <returns></returns>
         private bool TryGetNextMove(Cell cell, out Move move)
         {
             move = Move.None;
@@ -87,6 +106,12 @@
             return false;
         }
 
+        /// <summary>
+        /// Get the new position of the cell after moving
+        /// </summary>
+        /// <param name="current"></param>
+        /// <param name="move"></param>
+        /// <returns></returns>
         private static (int x, int y) GetNewPosition(Cell current, Move move)
         {
             var (offsetX, offsetY) = GetOffset(move);
@@ -95,13 +120,22 @@
             return (newX, newY);
         }
 
+        /// <summary>
+        /// Get the offset of the move
+        /// </summary>
+        /// <param name="move"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         private static (int x, int y) GetOffset(Move move)
         {
-            if (move == Move.Top) return (0, 1);
-            if (move == Move.Right) return (1, 0);
-            if (move == Move.Bottom) return (0, -1);
-            if (move == Move.Left) return (-1, 0);
-            throw new ArgumentException(@$"Invalid move ""{{move}}""");
+            return move switch
+            {
+                Move.Top => (0, 1),
+                Move.Right => (1, 0),
+                Move.Bottom => (0, -1),
+                Move.Left => (-1, 0),
+                _ => throw new ArgumentException(@$"Invalid move ""{{move}}""")
+            };
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Maze_Simulation.Generation;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
@@ -88,6 +89,7 @@ namespace Maze_Simulation
                             Stroke = Brushes.Black
                         });
                     }
+
                     if (cell.Walls[Cell.Right])
                     {
                         MazeCanvas.Children.Add(new Line
@@ -99,6 +101,7 @@ namespace Maze_Simulation
                             Stroke = Brushes.Black
                         });
                     }
+
                     if (cell.Walls[Cell.Top])
                     {
                         MazeCanvas.Children.Add(new Line
@@ -110,6 +113,7 @@ namespace Maze_Simulation
                             Stroke = Brushes.Black
                         });
                     }
+
                     if (cell.Walls[Cell.Left])
                     {
                         MazeCanvas.Children.Add(new Line
@@ -121,16 +125,19 @@ namespace Maze_Simulation
                             Stroke = Brushes.Black
                         });
                     }
-                    if (cell.IsPlayer)
+
+                    if (cell.IsStart)
                     {
                         MazeCanvas.Children.Add(new Ellipse
                         {
                             Width = _cellSize * MinPadding,
                             Height = _cellSize * MinPadding,
                             Fill = Brushes.Blue,
-                            Margin = new Thickness(x + _cellSize * (1 - MinPadding) / 2, y + _cellSize * (1 - MinPadding) / 2, 0, 0)
+                            Margin = new Thickness(x + _cellSize * (1 - MinPadding) / 2,
+                                y + _cellSize * (1 - MinPadding) / 2, 0, 0)
                         });
                     }
+
                     if (cell.IsTarget)
                     {
                         MazeCanvas.Children.Add(new Ellipse
@@ -138,7 +145,8 @@ namespace Maze_Simulation
                             Width = _cellSize * MinPadding,
                             Height = _cellSize * MinPadding,
                             Fill = Brushes.Red,
-                            Margin = new Thickness(x + _cellSize * (1 - MinPadding) / 2, y + _cellSize * (1 - MinPadding) / 2, 0, 0)
+                            Margin = new Thickness(x + _cellSize * (1 - MinPadding) / 2,
+                                y + _cellSize * (1 - MinPadding) / 2, 0, 0)
                         });
                     }
                 }
@@ -155,6 +163,58 @@ namespace Maze_Simulation
         {
             _resizeTimer.Stop();
             _resizeTimer.Start();
+        }
+
+        private void MazeCanvas_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+            var position = e.GetPosition(MazeCanvas);
+            var relativeX = position.X - _offsetX;
+            var relativeY = position.Y - _offsetY;
+
+            var row = (int)(relativeX / _cellSize);
+            var column = (int)(relativeY / _cellSize);
+
+            if (_cells == null || row < 0 || row >= _cells.GetLength(0) || column < 0 ||
+                column >= _cells.GetLength(1)) return;
+
+            var clickedCell = _cells[row, column];
+            var dialog = new CellActionDialog();
+            if (dialog.ShowDialog() != true) return;
+            switch (dialog.SelectedAction)
+            {
+                case "Start":
+                    if (clickedCell.IsTarget)
+                    {
+                        MessageBox.Show("Cannot set start on target cell");
+                        break;
+                    }
+                    foreach (var cell in _cells)
+                    {
+                        cell.IsStart = false;
+                    }
+                    clickedCell.IsStart = true;
+                    clickedCell.IsTarget = false;
+                    break;
+
+                case "Target":
+                    if (clickedCell.IsStart)
+                    {
+                        MessageBox.Show("Cannot set target on start cell");
+                        break;
+                    }
+                    foreach (var cell in _cells)
+                    {
+                        cell.IsTarget = false;
+                    }
+                    clickedCell.IsStart = false;
+                    clickedCell.IsTarget = true;
+                    break;
+
+                case "Cancel":
+                    break;
+            }
+            DrawMaze();
         }
     }
 }

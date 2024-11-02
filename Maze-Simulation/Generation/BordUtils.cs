@@ -12,7 +12,7 @@
                 }
             }
             cells[cells.GetLength(0) - 1, cells.GetLength(1) - 1].IsTarget = true;
-            cells[0, 0].IsPlayer = true;
+            cells[0, 0].IsStart = true;
         }
 
         public static void Reset(this Cell[,]? cells) => cells.FillBlank();

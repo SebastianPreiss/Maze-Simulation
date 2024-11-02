@@ -15,6 +15,7 @@
             _strategy = new MazeGenerator(ref Cells, seed);
             _strategy.Reset();
             _strategy.SetStartingPoint(1, 2);
+
         }
 
         public void GenerateMaze()

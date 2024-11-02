@@ -17,7 +17,7 @@
         public int Y;
         public bool IsCollapsed => !Available.Any();
         public bool IsTarget;
-        public bool IsPlayer;
+        public bool IsStart;
 
         public Cell(int x, int y)
         {

@@ -33,6 +33,6 @@
                 </Grid>
             </TabItem>
         </TabControl>
-        <Canvas x:Name="MazeCanvas" Grid.Column="1"/>
+        <Canvas x:Name="MazeCanvas" Grid.Column="1" MouseDown="MazeCanvas_OnMouseDown" Background="Transparent"/>
     </Grid>
 </Window>

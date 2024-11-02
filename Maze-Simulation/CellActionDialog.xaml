@@ -1,0 +1,21 @@
+﻿<Window x:Class="Maze_Simulation.CellActionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Maze_Simulation"
+        mc:Ignorable="d"
+        Title="Select Action" Height="150" Width="400">
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+        <TextBlock Text="Wählen Sie eine Aktion für diese Zelle:" 
+                   Margin="10" HorizontalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Name="StartButton" Content="Als Start setzen" 
+                    Width="100" Margin="5" Click="StartButton_Click"/>
+            <Button Name="TargetButton" Content="Als Ziel setzen" 
+                    Width="100" Margin="5" Click="TargetButton_Click"/>
+            <Button Name="CancelButton" Content="Abbrechen" 
+                    Width="100" Margin="5" Click="CancelButton_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
