@@ -1,4 +1,5 @@
 ﻿using Maze_Simulation.Generation;
+using Maze_Simulation.Model;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -12,13 +13,9 @@ namespace Maze_Simulation
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Cell[,]? _cells;
-        private int _cellSize = 16;
-        private int _offsetX;
-        private int _offsetY;
         private readonly DispatcherTimer _resizeTimer;
 
-        private const double MinPadding = 0.8;
+        private readonly MainViewModel _viewModel;
 
         public MainWindow()
         {
@@ -32,59 +29,31 @@ namespace Maze_Simulation
                 _resizeTimer.Stop();
                 DrawMaze();
             };
-        }
-
-        private void GenerateBoard()
-        {
-            int.TryParse(Seed.Text, out var seed);
-            var board = new BoardControl((int)WidthSlider.Value, (int)HeightSlider.Value, seed);
-            board.GenerateMaze();
-            _cells = board.Cells;
-        }
-
-        private void CalcCellSize()
-        {
-            if (_cells == null) return;
-            var width = MazeCanvas.ActualWidth * MinPadding;
-            var height = MazeCanvas.ActualHeight * MinPadding;
-
-            var cellWidth = width / _cells.GetLength(0);
-            var cellHeight = height / _cells.GetLength(1);
-
-            _cellSize = (int)(cellHeight < cellWidth ? cellHeight : cellWidth);
-        }
-
-        private void CalcOffset()
-        {
-            if (_cells == null) return;
-            var mazeWidth = _cells.GetLength(0) * _cellSize;
-            var mazeHeight = _cells.GetLength(1) * _cellSize;
-            _offsetX = (int)((MazeCanvas.ActualWidth - mazeWidth) / 2);
-            _offsetY = (int)((MazeCanvas.ActualHeight - mazeHeight) / 2);
+            _viewModel = new MainViewModel();
         }
 
         private void DrawMaze()
         {
-            if (_cells == null) return;
+            if (_viewModel.Cells == null) return;
             MazeCanvas.Children.Clear();
 
-            CalcCellSize();
-            CalcOffset();
+            _viewModel.CalcCellSize((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
+            _viewModel.CalcOffset((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
 
-            for (var i = 0; i < _cells.GetLength(0); i++)
+            for (var i = 0; i < _viewModel.Cells.GetLength(0); i++)
             {
-                for (var j = 0; j < _cells.GetLength(1); j++)
+                for (var j = 0; j < _viewModel.Cells.GetLength(1); j++)
                 {
-                    var cell = _cells[i, j];
-                    var x = i * _cellSize + _offsetX;
-                    var y = j * _cellSize + _offsetY;
+                    var cell = _viewModel.Cells[i, j];
+                    var x = i * _viewModel.CellSize + _viewModel.OffsetX;
+                    var y = j * _viewModel.CellSize + _viewModel.OffsetY;
                     if (cell.Walls[Cell.Bottom])
                     {
                         MazeCanvas.Children.Add(new Line
                         {
                             X1 = x,
                             Y1 = y,
-                            X2 = x + _cellSize,
+                            X2 = x + _viewModel.CellSize,
                             Y2 = y,
                             Stroke = Brushes.Black
                         });
@@ -94,10 +63,10 @@ namespace Maze_Simulation
                     {
                         MazeCanvas.Children.Add(new Line
                         {
-                            X1 = x + _cellSize,
+                            X1 = x + _viewModel.CellSize,
                             Y1 = y,
-                            X2 = x + _cellSize,
-                            Y2 = y + _cellSize,
+                            X2 = x + _viewModel.CellSize,
+                            Y2 = y + _viewModel.CellSize,
                             Stroke = Brushes.Black
                         });
                     }
@@ -107,9 +76,9 @@ namespace Maze_Simulation
                         MazeCanvas.Children.Add(new Line
                         {
                             X1 = x,
-                            Y1 = y + _cellSize,
-                            X2 = x + _cellSize,
-                            Y2 = y + _cellSize,
+                            Y1 = y + _viewModel.CellSize,
+                            X2 = x + _viewModel.CellSize,
+                            Y2 = y + _viewModel.CellSize,
                             Stroke = Brushes.Black
                         });
                     }
@@ -121,7 +90,7 @@ namespace Maze_Simulation
                             X1 = x,
                             Y1 = y,
                             X2 = x,
-                            Y2 = y + _cellSize,
+                            Y2 = y + _viewModel.CellSize,
                             Stroke = Brushes.Black
                         });
                     }
@@ -130,11 +99,11 @@ namespace Maze_Simulation
                     {
                         MazeCanvas.Children.Add(new Ellipse
                         {
-                            Width = _cellSize * MinPadding,
-                            Height = _cellSize * MinPadding,
+                            Width = _viewModel.CellSize * _viewModel.MinPadding,
+                            Height = _viewModel.CellSize * _viewModel.MinPadding,
                             Fill = Brushes.Blue,
-                            Margin = new Thickness(x + _cellSize * (1 - MinPadding) / 2,
-                                y + _cellSize * (1 - MinPadding) / 2, 0, 0)
+                            Margin = new Thickness(x + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2,
+                                y + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2, 0, 0)
                         });
                     }
 
@@ -142,11 +111,11 @@ namespace Maze_Simulation
                     {
                         MazeCanvas.Children.Add(new Ellipse
                         {
-                            Width = _cellSize * MinPadding,
-                            Height = _cellSize * MinPadding,
+                            Width = _viewModel.CellSize * _viewModel.MinPadding,
+                            Height = _viewModel.CellSize * _viewModel.MinPadding,
                             Fill = Brushes.Red,
-                            Margin = new Thickness(x + _cellSize * (1 - MinPadding) / 2,
-                                y + _cellSize * (1 - MinPadding) / 2, 0, 0)
+                            Margin = new Thickness(x + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2,
+                                y + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2, 0, 0)
                         });
                     }
                 }
@@ -155,7 +124,7 @@ namespace Maze_Simulation
 
         private void OnGenerateClicked(object sender, RoutedEventArgs e)
         {
-            GenerateBoard();
+            _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value);
             DrawMaze();
         }
 
@@ -169,68 +138,12 @@ namespace Maze_Simulation
         {
             if (e.LeftButton != MouseButtonState.Pressed) return;
             var position = e.GetPosition(MazeCanvas);
-            var relativeX = position.X - _offsetX;
-            var relativeY = position.Y - _offsetY;
-
-            var row = (int)(relativeX / _cellSize);
-            var column = (int)(relativeY / _cellSize);
-
-            if (_cells == null || row < 0 || row >= _cells.GetLength(0) || column < 0 ||
-                column >= _cells.GetLength(1)) return;
-
-            var clickedCell = _cells[row, column];
-            var dialog = new CellActionDialog();
-            if (dialog.ShowDialog() != true) return;
-            switch (dialog.SelectedAction)
-            {
-                case "Start":
-                    if (clickedCell.IsTarget)
-                    {
-                        MessageBox.Show("Cannot set start on target cell");
-                        break;
-                    }
-                    foreach (var cell in _cells)
-                    {
-                        cell.IsStart = false;
-                    }
-                    clickedCell.IsStart = true;
-                    clickedCell.IsTarget = false;
-                    break;
-
-                case "Target":
-                    if (clickedCell.IsStart)
-                    {
-                        MessageBox.Show("Cannot set target on start cell");
-                        break;
-                    }
-                    foreach (var cell in _cells)
-                    {
-                        cell.IsTarget = false;
-                    }
-                    clickedCell.IsStart = false;
-                    clickedCell.IsTarget = true;
-                    break;
-
-                case "Cancel":
-                    break;
-            }
+            _viewModel.SelectActionOnCell(position);
             DrawMaze();
         }
         private void OnStartAlgorithm(object sender, RoutedEventArgs routedEventArgs)
         {
-            MessageBox.Show("This will be implemented soon");
-
-            switch (AlgorithmComboBox.SelectedIndex)
-            {
-                // A*
-
-                case 0:
-                    break;
-
-                // Dijkstra
-                case 1:
-                    break;
-            }
+            _viewModel.StartAlgorithm(AlgorithmComboBox.SelectedIndex);
         }
     }
 }
