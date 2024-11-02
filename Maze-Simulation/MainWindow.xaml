@@ -16,20 +16,26 @@
             <TabItem Header="Generation">
                 <Grid Background="#FFE5E5E5">
                     <Label Content="Width" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-                    <Slider x:Name="WidthSlider" HorizontalAlignment="Center" Margin="0,36,0,0" VerticalAlignment="Top" Width="120" Minimum="8" Maximum="64" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                    <Slider x:Name="WidthSlider" HorizontalAlignment="Left" Margin="33,36,0,0" VerticalAlignment="Top" Width="120" Minimum="8" Maximum="64" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1" Grid.ColumnSpan="2"/>
 
                     <Label Content="Height" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"/>
-                    <Slider x:Name="HeightSlider" HorizontalAlignment="Center" Margin="0,85,0,0" VerticalAlignment="Top" Width="120" Minimum="8" Maximum="64" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                    <Slider x:Name="HeightSlider" HorizontalAlignment="Left" Margin="33,85,0,0" VerticalAlignment="Top" Width="120" Minimum="8" Maximum="64" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1" Grid.ColumnSpan="2"/>
 
                     <Label Content="Seed" HorizontalAlignment="Left" Margin="18,108,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.565,-0.209"/>
-                    <TextBox x:Name="Seed" HorizontalAlignment="Center" Margin="0,139,0,0" TextWrapping="Wrap" Text="42" VerticalAlignment="Top" Width="134"/>
+                    <TextBox x:Name="Seed" HorizontalAlignment="Left" Margin="26,139,0,0" TextWrapping="Wrap" Text="42" VerticalAlignment="Top" Width="134" Grid.ColumnSpan="2"/>
 
-                    <Button Content="Generate" HorizontalAlignment="Center" Margin="0,162,0,0" VerticalAlignment="Top" Width="134" Click="OnGenerateClicked"/>
+                    <Button Content="Generate" HorizontalAlignment="Left" Margin="26,162,0,0" VerticalAlignment="Top" Width="134" Click="OnGenerateClicked" Grid.ColumnSpan="2"/>
 
                 </Grid>
             </TabItem>
             <TabItem Header="Solver">
                 <Grid Background="#FFE5E5E5">
+                    <Label Content="Select Algorithm" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="AlgorithmComboBox" HorizontalAlignment="Center" Margin="0,36,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="0">
+                        <ComboBoxItem Content="A*"/>
+                        <ComboBoxItem Content="Dijkstra" />
+                    </ComboBox>
+                    <Button Content="Start Algorithm" HorizontalAlignment="Center" Margin="0,72,0,0" VerticalAlignment="Top" Width="134" Click="OnStartAlgorithm"/>
                 </Grid>
             </TabItem>
         </TabControl>

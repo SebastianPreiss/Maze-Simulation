@@ -216,5 +216,21 @@ namespace Maze_Simulation
             }
             DrawMaze();
         }
+        private void OnStartAlgorithm(object sender, RoutedEventArgs routedEventArgs)
+        {
+            MessageBox.Show("This will be implemented soon");
+
+            switch (AlgorithmComboBox.SelectedIndex)
+            {
+                // A*
+
+                case 0:
+                    break;
+
+                // Dijkstra
+                case 1:
+                    break;
+            }
+        }
     }
 }
