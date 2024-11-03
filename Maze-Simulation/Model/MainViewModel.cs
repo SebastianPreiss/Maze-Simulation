@@ -1,5 +1,10 @@
 ﻿using Maze_Simulation.Generation;
+using Maze_Simulation.SolvingAlgorithms;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Windows;
+using Timer = System.Timers.Timer;
 
 namespace Maze_Simulation.Model
 {
@@ -9,8 +14,32 @@ namespace Maze_Simulation.Model
         public int CellSize = 16;
         public int OffsetX;
         public int OffsetY;
-
         public double MinPadding = 0.8;
+        public List<Cell>? SolvedPath { get; private set; }
+
+        private string _duration;
+        public string Duration
+        {
+            get => _duration;
+            set
+            {
+                _duration = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private readonly Timer _timer;
+        private readonly Stopwatch _stopwatch;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public MainViewModel()
+        {
+            _timer = new Timer(100);
+            _timer.Elapsed += (s, e) => UpdateDuration();
+            _stopwatch = new Stopwatch();
+            Duration = "00:00";
+        }
 
 
         public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight)
@@ -95,22 +124,66 @@ namespace Maze_Simulation.Model
             }
         }
 
-        public void StartAlgorithm(int index)
+        public async void StartAlgorithm(int index)
         {
-
-            MessageBox.Show("This will be implemented soon");
-
+            IPathSolver? solver = null;
+            if (Cells == null)
+            {
+                MessageBox.Show("No Maze defined", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             switch (index)
             {
                 // A*
-
                 case 0:
+                    solver = new AStarSolver(Cells);
                     break;
 
                 // Dijkstra
                 case 1:
                     break;
+
+                default:
+                    MessageBox.Show("No valid algorithm", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    break;
             }
+            if (solver == null) return;
+
+            _stopwatch.Start();
+            _timer.Start();
+
+            SolvedPath = await Task.Run(() => solver.FindPath());
+            if (SolvedPath == null) MessageBox.Show("Unable to find Path", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+
+            _timer.Stop();
+            _stopwatch.Stop();
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Duration = $"{_stopwatch.Elapsed.Seconds:D2}:{_stopwatch.Elapsed.Milliseconds:D5}";
+            });
+        }
+
+        private void UpdateDuration()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Duration = $"{_stopwatch.Elapsed.Seconds:D2}:{_stopwatch.Elapsed.Milliseconds:D5}";
+            });
+        }
+
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void ResetPathSolver()
+        {
+            if (Cells == null) return;
+            SolvedPath?.Clear();
+            Duration = "00:00";
+            _stopwatch.Reset();
         }
     }
 }

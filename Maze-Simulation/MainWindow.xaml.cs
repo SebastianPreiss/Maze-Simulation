@@ -29,7 +29,9 @@ namespace Maze_Simulation
                 _resizeTimer.Stop();
                 DrawMaze();
             };
+
             _viewModel = new MainViewModel();
+            DataContext = _viewModel;
         }
 
         private void DrawMaze()
@@ -95,6 +97,30 @@ namespace Maze_Simulation
                         });
                     }
 
+                    if (_viewModel.SolvedPath != null)
+                    {
+                        foreach (var c in _viewModel.SolvedPath.Where(c => c is { IsTarget: false, IsStart: false }))
+                        {
+                            var pathX = c.X * _viewModel.CellSize + _viewModel.OffsetX;
+                            var pathY = c.Y * _viewModel.CellSize + _viewModel.OffsetY;
+                            var rectangleSize = _viewModel.CellSize * 0.4;
+                            MazeCanvas.Children.Add(new Rectangle
+                            {
+                                Width = rectangleSize,
+                                Height = rectangleSize,
+                                Stroke = Brushes.Yellow,
+                                StrokeThickness = 1,
+                                Fill = new SolidColorBrush(Color.FromArgb(128, 255, 255, 0)),
+                                Margin = new Thickness(
+                                    pathX + (_viewModel.CellSize - rectangleSize) / 2,
+                                    pathY + (_viewModel.CellSize - rectangleSize) / 2,
+                                    0,
+                                    0
+                                )
+                            });
+                        }
+                    }
+
                     if (cell.IsStart)
                     {
                         MazeCanvas.Children.Add(new Ellipse
@@ -124,6 +150,7 @@ namespace Maze_Simulation
 
         private void OnGenerateClicked(object sender, RoutedEventArgs e)
         {
+            _viewModel.ResetPathSolver();
             _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value);
             DrawMaze();
         }
@@ -141,9 +168,13 @@ namespace Maze_Simulation
             _viewModel.SelectActionOnCell(position);
             DrawMaze();
         }
-        private void OnStartAlgorithm(object sender, RoutedEventArgs routedEventArgs)
+
+        private async void OnStartAlgorithm(object sender, RoutedEventArgs routedEventArgs)
         {
-            _viewModel.StartAlgorithm(AlgorithmComboBox.SelectedIndex);
+            _viewModel.ResetPathSolver();
+            var index = AlgorithmComboBox.SelectedIndex;
+            await Task.Run(() => _viewModel.StartAlgorithm(index));
+            DrawMaze();
         }
     }
 }
