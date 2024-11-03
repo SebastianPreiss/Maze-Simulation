@@ -17,6 +17,10 @@ namespace Maze_Simulation.Model
         public double MinPadding = 0.8;
         public List<Cell>? SolvedPath { get; private set; }
 
+        private readonly Timer _timer;
+        private readonly Stopwatch _stopwatch;
+        public event PropertyChangedEventHandler PropertyChanged;
+
         private string _duration;
         public string Duration
         {
@@ -28,20 +32,20 @@ namespace Maze_Simulation.Model
             }
         }
 
-        private readonly Timer _timer;
-        private readonly Stopwatch _stopwatch;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
         public MainViewModel()
         {
             _timer = new Timer(100);
             _timer.Elapsed += (s, e) => UpdateDuration();
             _stopwatch = new Stopwatch();
-            Duration = "00:00";
+            Duration = "0ms";
         }
 
-
+        /// <summary>
+        /// Generates a new maze board with the specified dimensions and seed value.
+        /// </summary>
+        /// <param name="Seed">The seed used for random generation of the maze.</param>
+        /// <param name="mazeWidth">The width of the maze.</param>
+        /// <param name="mazeHeight">The height of the maze.</param>
         public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight)
         {
             int.TryParse(Seed, out var seed);
@@ -50,6 +54,11 @@ namespace Maze_Simulation.Model
             Cells = board.Cells;
         }
 
+        /// <summary>
+        /// Calculates the size of each cell based on the given canvas dimensions and a minimum padding factor.
+        /// </summary>
+        /// <param name="canvasWidth">The width of the canvas to draw the maze.</param>
+        /// <param name="canvasHeight">The height of the canvas to draw the maze.</param>
         public void CalcCellSize(int canvasWidth, int canvasHeight)
         {
             if (Cells == null) return;
@@ -62,6 +71,11 @@ namespace Maze_Simulation.Model
             CellSize = (int)(cellHeight < cellWidth ? cellHeight : cellWidth);
         }
 
+        /// <summary>
+        /// Calculates the offset to center the maze within the given canvas dimensions.
+        /// </summary>
+        /// <param name="canvasWidth">The width of the canvas to draw the maze.</param>
+        /// <param name="canvasHeight">The height of the canvas to draw the maze.</param>
         public void CalcOffset(int canvasWidth, int canvasHeight)
         {
             if (Cells == null) return;
@@ -71,6 +85,10 @@ namespace Maze_Simulation.Model
             OffsetY = (canvasHeight - mazeHeight) / 2;
         }
 
+        /// <summary>
+        /// Handles user actions on a selected cell in the maze, allowing the user to set a start or target cell.
+        /// </summary>
+        /// <param name="position">The position of the mouse click on the canvas.</param>
         public void SelectActionOnCell(Point position)
         {
             var relativeX = position.X - OffsetX;
@@ -124,6 +142,11 @@ namespace Maze_Simulation.Model
             }
         }
 
+        /// <summary>
+        /// Starts the selected pathfinding algorithm (A* or Dijkstra) and calculates the solved path.
+        /// Displays an error if no maze is defined or if the selected algorithm is invalid.
+        /// </summary>
+        /// <param name="index">The index of the algorithm to use (0 for A*, 1 for Dijkstra).</param>
         public async void StartAlgorithm(int index)
         {
             IPathSolver? solver = null;
@@ -152,7 +175,7 @@ namespace Maze_Simulation.Model
             _stopwatch.Start();
             _timer.Start();
 
-            SolvedPath = await Task.Run(() => solver.FindPath());
+            SolvedPath = await Task.Run(() => solver.StartSolver());
             if (SolvedPath == null) MessageBox.Show("Unable to find Path", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
 
 
@@ -161,15 +184,26 @@ namespace Maze_Simulation.Model
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                Duration = $"{_stopwatch.Elapsed.Seconds:D2}:{_stopwatch.Elapsed.Milliseconds:D5}";
+                Duration = $"{_stopwatch.Elapsed.Milliseconds}ms";
             });
+        }
+
+        /// <summary>
+        /// Resets the solved path and duration, clearing any previously calculated paths.
+        /// </summary>
+        public void ResetSolvedPath()
+        {
+            if (Cells == null) return;
+            SolvedPath?.Clear();
+            Duration = "0ms";
+            _stopwatch.Reset();
         }
 
         private void UpdateDuration()
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                Duration = $"{_stopwatch.Elapsed.Seconds:D2}:{_stopwatch.Elapsed.Milliseconds:D5}";
+                Duration = $"{_stopwatch.Elapsed.Milliseconds}ms";
             });
         }
 
@@ -178,12 +212,6 @@ namespace Maze_Simulation.Model
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public void ResetPathSolver()
-        {
-            if (Cells == null) return;
-            SolvedPath?.Clear();
-            Duration = "00:00";
-            _stopwatch.Reset();
-        }
+
     }
 }

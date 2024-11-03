@@ -15,7 +15,12 @@ namespace Maze_Simulation.SolvingAlgorithms
             _target = _cells.Cast<Cell>().First(c => c.IsTarget);
         }
 
-        public List<Cell> FindPath()
+
+        /// <summary>
+        /// Starts the A* pathfinding algorithm to find the shortest path from the start cell to the target cell.
+        /// </summary>
+        /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
+        public List<Cell> StartSolver()
         {
             var openSet = new List<Cell> { _start };
             var cameFrom = new Dictionary<Cell, Cell>();
@@ -48,7 +53,7 @@ namespace Maze_Simulation.SolvingAlgorithms
             return null;
         }
 
-        private static List<Cell> ReconstructPath(Dictionary<Cell, Cell> cameFrom, Cell current)
+        private static List<Cell> ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)
         {
             var totalPath = new List<Cell> { current };
             while (cameFrom.ContainsKey(current))
@@ -60,7 +65,7 @@ namespace Maze_Simulation.SolvingAlgorithms
             return totalPath;
         }
 
-        private double Heuristic(Cell a, Cell b)
+        private static double Heuristic(Cell a, Cell b)
         {
             return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
         }
@@ -80,9 +85,6 @@ namespace Maze_Simulation.SolvingAlgorithms
                 var x = cell.X + direction.Value.dx;
                 var y = cell.Y + direction.Value.dy;
 
-                var i = _cells.GetLength(0);
-                var j = _cells.GetLength(1);
-
                 if (x < 0 || x >= _cells.GetLength(0) || y < 0 || y >= _cells.GetLength(1)) continue;
                 if (!HasWall(cell, direction.Key))
                 {
@@ -91,7 +93,7 @@ namespace Maze_Simulation.SolvingAlgorithms
             }
         }
 
-        private bool HasWall(Cell cell, Move direction)
+        private static bool HasWall(Cell cell, Move direction)
         {
             return direction switch
             {

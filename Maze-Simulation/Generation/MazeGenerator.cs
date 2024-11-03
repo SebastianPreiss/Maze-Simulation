@@ -1,8 +1,15 @@
 ﻿namespace Maze_Simulation.Generation
 {
     /// <summary>
-    /// A Maze generator using Depth First Search algorithm
+    /// Represents a maze generator that utilizes the Depth First Search algorithm to create a maze. 
+    /// The generator modifies the walls of the cells to establish paths based on random moves selected 
+    /// from available options, starting from a specified starting point.
     /// </summary>
+    /// <remarks>
+    /// This class implements the <see cref="IMazeStrategy"/> interface and requires a 2D array of cells 
+    /// and a seed value for random number generation to initialize the maze generation process.
+    /// </remarks>
+
     public class MazeGenerator : IMazeStrategy
     {
         private readonly Cell[,]? _cells;
@@ -16,19 +23,19 @@
         }
 
         /// <summary>
-        /// Reset the maze
+        /// Resets the maze to its initial state, clearing any modifications made during generation.
         /// </summary>
-
         public void Reset()
         {
             _cells.Reset();
         }
 
         /// <summary>
-        /// Set the starting point for the generation
+        /// Sets the starting point for maze generation at the specified coordinates.
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
+        /// <param name="x">The x-coordinate of the starting point.</param>
+        /// <param name="y">The y-coordinate of the starting point.</param>
+
         public void SetStartingPoint(int x, int y)
         {
             _track.Clear();
@@ -36,9 +43,10 @@
         }
 
         /// <summary>
-        /// Generate the maze
+        /// Generates the maze using a depth-first search algorithm. 
+        /// It modifies the walls of the cells to create paths, based on the random moves chosen from the available options.
         /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if an invalid move is encountered during generation.</exception>
         public void Generate()
         {
             while (_track.Any())
@@ -83,12 +91,6 @@
             }
         }
 
-        /// <summary>
-        /// Check if there is a valid move from the current cell
-        /// </summary>
-        /// <param name="cell"></param>
-        /// <param name="move"></param>
-        /// <returns></returns>
         private bool TryGetNextMove(Cell cell, out Move move)
         {
             move = Move.None;
@@ -106,12 +108,6 @@
             return false;
         }
 
-        /// <summary>
-        /// Get the new position of the cell after moving
-        /// </summary>
-        /// <param name="current"></param>
-        /// <param name="move"></param>
-        /// <returns></returns>
         private static (int x, int y) GetNewPosition(Cell current, Move move)
         {
             var (offsetX, offsetY) = GetOffset(move);
@@ -120,12 +116,6 @@
             return (newX, newY);
         }
 
-        /// <summary>
-        /// Get the offset of the move
-        /// </summary>
-        /// <param name="move"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
         private static (int x, int y) GetOffset(Move move)
         {
             return move switch

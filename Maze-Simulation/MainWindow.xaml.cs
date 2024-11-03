@@ -9,7 +9,7 @@ using System.Windows.Threading;
 namespace Maze_Simulation
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Main window for the Maze application, responsible for displaying the maze and handling user interactions.
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -34,6 +34,10 @@ namespace Maze_Simulation
             DataContext = _viewModel;
         }
 
+        /// <summary>
+        /// Draws the maze on the canvas based on the current state of the view model.
+        /// Clears previous drawings and calculates cell sizes and offsets.
+        /// </summary>
         private void DrawMaze()
         {
             if (_viewModel.Cells == null) return;
@@ -148,19 +152,34 @@ namespace Maze_Simulation
             }
         }
 
+        /// <summary>
+        /// Handles the click event for generating a new maze. Resets the solved path and generates a new board.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The event data.</param>
         private void OnGenerateClicked(object sender, RoutedEventArgs e)
         {
-            _viewModel.ResetPathSolver();
+            _viewModel.ResetSolvedPath();
             _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value);
             DrawMaze();
         }
 
+        /// <summary>
+        /// Handles the size changed event for the window. Triggers the redraw of the maze after resizing.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The event data.</param>
         private void WindowResized(object sender, SizeChangedEventArgs e)
         {
             _resizeTimer.Stop();
             _resizeTimer.Start();
         }
 
+        /// <summary>
+        /// Handles the mouse down event on the maze canvas. Executes the selected action on the clicked cell.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The event data.</param>
         private void MazeCanvas_OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton != MouseButtonState.Pressed) return;
@@ -169,9 +188,14 @@ namespace Maze_Simulation
             DrawMaze();
         }
 
+        /// <summary>
+        /// Starts the selected maze-solving algorithm asynchronously. Resets the solved path before starting.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="routedEventArgs">The event data.</param>
         private async void OnStartAlgorithm(object sender, RoutedEventArgs routedEventArgs)
         {
-            _viewModel.ResetPathSolver();
+            _viewModel.ResetSolvedPath();
             var index = AlgorithmComboBox.SelectedIndex;
             await Task.Run(() => _viewModel.StartAlgorithm(index));
             DrawMaze();

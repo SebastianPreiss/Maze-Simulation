@@ -2,8 +2,8 @@
 
 namespace Maze_Simulation.SolvingAlgorithms
 {
-    interface IPathSolver
+    internal interface IPathSolver
     {
-        public List<Cell> FindPath();
+        public List<Cell> StartSolver();
     }
 }
