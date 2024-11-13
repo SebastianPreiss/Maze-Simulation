@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:Maze_Simulation"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Application.Resources>
 </Application>

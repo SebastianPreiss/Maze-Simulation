@@ -20,7 +20,7 @@ namespace Maze_Simulation.SolvingAlgorithms
         /// Starts the A* pathfinding algorithm to find the shortest path from the start cell to the target cell.
         /// </summary>
         /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
-        public List<Cell> StartSolver()
+        public async Task<List<Cell>> StartSolver()
         {
             var openSet = new List<Cell> { _start };
             var cameFrom = new Dictionary<Cell, Cell>();

@@ -4,24 +4,23 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using Timer = System.Timers.Timer;
 
 namespace Maze_Simulation.Model
 {
-    public class MainViewModel
+    public class MainViewModel : INotifyPropertyChanged
     {
         public Cell[,]? Cells;
         public int CellSize = 16;
         public int OffsetX;
         public int OffsetY;
-        public double MinPadding = 0.8;
+        public double MinPadding = 0.9;
         public List<Cell>? SolvedPath { get; private set; }
 
-        private readonly Timer _timer;
         private readonly Stopwatch _stopwatch;
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         private string _duration;
+
         public string Duration
         {
             get => _duration;
@@ -32,10 +31,19 @@ namespace Maze_Simulation.Model
             }
         }
 
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                _isBusy = value;
+                OnPropertyChanged();
+            }
+        }
+
         public MainViewModel()
         {
-            _timer = new Timer(100);
-            _timer.Elapsed += (s, e) => UpdateDuration();
             _stopwatch = new Stopwatch();
             Duration = "0ms";
         }
@@ -108,7 +116,8 @@ namespace Maze_Simulation.Model
                 case "Start":
                     if (clickedCell.IsTarget)
                     {
-                        MessageBox.Show("Cannot set start on target cell", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Cannot set start on target cell", "Error", MessageBoxButton.OK,
+                            MessageBoxImage.Error);
                         break;
                     }
 
@@ -124,7 +133,8 @@ namespace Maze_Simulation.Model
                 case "Target":
                     if (clickedCell.IsStart)
                     {
-                        MessageBox.Show("Cannot set target on start cell", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Cannot set target on start cell", "Error", MessageBoxButton.OK,
+                            MessageBoxImage.Error);
                         break;
                     }
 
@@ -147,45 +157,66 @@ namespace Maze_Simulation.Model
         /// Displays an error if no maze is defined or if the selected algorithm is invalid.
         /// </summary>
         /// <param name="index">The index of the algorithm to use (0 for A*, 1 for Dijkstra).</param>
-        public async void StartAlgorithm(int index)
+        public async Task StartAlgorithm(int index)
         {
-            IPathSolver? solver = null;
             if (Cells == null)
             {
                 MessageBox.Show("No Maze defined", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            switch (index)
+
+            IPathSolver? solver = index switch
             {
-                // A*
-                case 0:
-                    solver = new AStarSolver(Cells);
-                    break;
+                0 => new AStarSolver(Cells),  // A*
+                1 => null,                    // Dijkstra (noch nicht implementiert)
+                _ => null                     // Default
+            };
 
-                // Dijkstra
-                case 1:
-                    break;
-
-                default:
-                    MessageBox.Show("No valid algorithm", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    break;
+            if (solver == null)
+            {
+                MessageBox.Show("No valid algorithm", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
-            if (solver == null) return;
 
-            _stopwatch.Start();
-            _timer.Start();
-
-            SolvedPath = await Task.Run(() => solver.StartSolver());
-            if (SolvedPath == null) MessageBox.Show("Unable to find Path", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-
-
-            _timer.Stop();
-            _stopwatch.Stop();
-
-            Application.Current.Dispatcher.Invoke(() =>
+            IsBusy = true;
+            try
             {
-                Duration = $"{_stopwatch.Elapsed.Milliseconds}ms";
-            });
+                _stopwatch.Restart();
+
+                UpdateDurationInBackground();
+
+                SolvedPath = await solver.StartSolver();
+
+                if (SolvedPath == null)
+                {
+                    MessageBox.Show("Unable to find Path", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsBusy = false;
+                _stopwatch.Stop();
+                Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
+            }
+        }
+
+        /// <summary>
+        /// Updates the duration of the pathfinding algorithm in the background while the stopwatch is running.
+        /// </summary>
+        private async Task UpdateDurationInBackground()
+        {
+            while (_stopwatch.IsRunning)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
+                });
+                await Task.Delay(500);
+            }
         }
 
         /// <summary>
@@ -195,23 +226,12 @@ namespace Maze_Simulation.Model
         {
             if (Cells == null) return;
             SolvedPath?.Clear();
-            Duration = "0ms";
             _stopwatch.Reset();
-        }
-
-        private void UpdateDuration()
-        {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                Duration = $"{_stopwatch.Elapsed.Milliseconds}ms";
-            });
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-
     }
 }

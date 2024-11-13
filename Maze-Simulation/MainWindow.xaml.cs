@@ -1,9 +1,9 @@
 ﻿using Maze_Simulation.Generation;
 using Maze_Simulation.Model;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace Maze_Simulation
@@ -16,6 +16,8 @@ namespace Maze_Simulation
         private readonly DispatcherTimer _resizeTimer;
 
         private readonly MainViewModel _viewModel;
+
+        private DispatcherTimer _solverTimer;
 
         public MainWindow()
         {
@@ -41,115 +43,116 @@ namespace Maze_Simulation
         private void DrawMaze()
         {
             if (_viewModel.Cells == null) return;
+
             MazeCanvas.Children.Clear();
 
-            _viewModel.CalcCellSize((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
-            _viewModel.CalcOffset((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
-
-            for (var i = 0; i < _viewModel.Cells.GetLength(0); i++)
+            var drawingVisual = new DrawingVisual();
+            using (var dc = drawingVisual.RenderOpen())
             {
-                for (var j = 0; j < _viewModel.Cells.GetLength(1); j++)
+                _viewModel.CalcCellSize((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
+                _viewModel.CalcOffset((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
+
+                for (var i = 0; i < _viewModel.Cells.GetLength(0); i++)
                 {
-                    var cell = _viewModel.Cells[i, j];
-                    var x = i * _viewModel.CellSize + _viewModel.OffsetX;
-                    var y = j * _viewModel.CellSize + _viewModel.OffsetY;
-                    if (cell.Walls[Cell.Bottom])
+                    for (var j = 0; j < _viewModel.Cells.GetLength(1); j++)
                     {
-                        MazeCanvas.Children.Add(new Line
-                        {
-                            X1 = x,
-                            Y1 = y,
-                            X2 = x + _viewModel.CellSize,
-                            Y2 = y,
-                            Stroke = Brushes.Black
-                        });
-                    }
+                        var cell = _viewModel.Cells[i, j];
+                        var x = i * _viewModel.CellSize + _viewModel.OffsetX;
+                        var y = j * _viewModel.CellSize + _viewModel.OffsetY;
 
-                    if (cell.Walls[Cell.Right])
-                    {
-                        MazeCanvas.Children.Add(new Line
-                        {
-                            X1 = x + _viewModel.CellSize,
-                            Y1 = y,
-                            X2 = x + _viewModel.CellSize,
-                            Y2 = y + _viewModel.CellSize,
-                            Stroke = Brushes.Black
-                        });
-                    }
+                        if (cell.Walls[Cell.Bottom])
+                            dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x, y), new Point(x + _viewModel.CellSize, y));
+                        if (cell.Walls[Cell.Right])
+                            dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x + _viewModel.CellSize, y), new Point(x + _viewModel.CellSize, y + _viewModel.CellSize));
+                        if (cell.Walls[Cell.Top])
+                            dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x, y + _viewModel.CellSize), new Point(x + _viewModel.CellSize, y + _viewModel.CellSize));
+                        if (cell.Walls[Cell.Left])
+                            dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x, y), new Point(x, y + _viewModel.CellSize));
 
-                    if (cell.Walls[Cell.Top])
-                    {
-                        MazeCanvas.Children.Add(new Line
+                        if (_viewModel.SolvedPath != null && _viewModel.SolvedPath.Contains(cell) && cell is { IsStart: false, IsTarget: false })
                         {
-                            X1 = x,
-                            Y1 = y + _viewModel.CellSize,
-                            X2 = x + _viewModel.CellSize,
-                            Y2 = y + _viewModel.CellSize,
-                            Stroke = Brushes.Black
-                        });
-                    }
 
-                    if (cell.Walls[Cell.Left])
-                    {
-                        MazeCanvas.Children.Add(new Line
-                        {
-                            X1 = x,
-                            Y1 = y,
-                            X2 = x,
-                            Y2 = y + _viewModel.CellSize,
-                            Stroke = Brushes.Black
-                        });
-                    }
-
-                    if (_viewModel.SolvedPath != null)
-                    {
-                        foreach (var c in _viewModel.SolvedPath.Where(c => c is { IsTarget: false, IsStart: false }))
-                        {
-                            var pathX = c.X * _viewModel.CellSize + _viewModel.OffsetX;
-                            var pathY = c.Y * _viewModel.CellSize + _viewModel.OffsetY;
+                            var pathX = cell.X * _viewModel.CellSize + _viewModel.OffsetX;
+                            var pathY = cell.Y * _viewModel.CellSize + _viewModel.OffsetY;
                             var rectangleSize = _viewModel.CellSize * 0.4;
-                            MazeCanvas.Children.Add(new Rectangle
-                            {
-                                Width = rectangleSize,
-                                Height = rectangleSize,
-                                Stroke = Brushes.Yellow,
-                                StrokeThickness = 1,
-                                Fill = new SolidColorBrush(Color.FromArgb(128, 255, 255, 0)),
-                                Margin = new Thickness(
+
+                            var pathColor = CalcColor(cell);
+
+                            dc.DrawRectangle(
+                                new SolidColorBrush(pathColor),
+                                new Pen(new SolidColorBrush(pathColor), 1),
+                                new Rect(
                                     pathX + (_viewModel.CellSize - rectangleSize) / 2,
                                     pathY + (_viewModel.CellSize - rectangleSize) / 2,
-                                    0,
-                                    0
+                                    rectangleSize,
+                                    rectangleSize
                                 )
-                            });
+                            );
                         }
-                    }
 
-                    if (cell.IsStart)
-                    {
-                        MazeCanvas.Children.Add(new Ellipse
-                        {
-                            Width = _viewModel.CellSize * _viewModel.MinPadding,
-                            Height = _viewModel.CellSize * _viewModel.MinPadding,
-                            Fill = Brushes.Blue,
-                            Margin = new Thickness(x + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2,
-                                y + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2, 0, 0)
-                        });
-                    }
 
-                    if (cell.IsTarget)
-                    {
-                        MazeCanvas.Children.Add(new Ellipse
+                        if (cell.IsStart)
                         {
-                            Width = _viewModel.CellSize * _viewModel.MinPadding,
-                            Height = _viewModel.CellSize * _viewModel.MinPadding,
-                            Fill = Brushes.Red,
-                            Margin = new Thickness(x + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2,
-                                y + _viewModel.CellSize * (1 - _viewModel.MinPadding) / 2, 0, 0)
-                        });
+                            dc.DrawEllipse(
+                                Brushes.Blue, null,
+                                new Point(
+                                    x + _viewModel.CellSize / 2,
+                                    y + _viewModel.CellSize / 2
+                                ),
+                                _viewModel.CellSize * _viewModel.MinPadding / 2,
+                                _viewModel.CellSize * _viewModel.MinPadding / 2
+                            );
+                        }
+
+                        if (cell.IsTarget)
+                        {
+                            dc.DrawEllipse(
+                                Brushes.Red, null,
+                                new Point(
+                                    x + _viewModel.CellSize / 2,
+                                    y + _viewModel.CellSize / 2
+                                ),
+                                _viewModel.CellSize * _viewModel.MinPadding / 2,
+                                _viewModel.CellSize * _viewModel.MinPadding / 2
+                            );
+                        }
                     }
                 }
             }
+
+            var drawingImage = new DrawingImage(drawingVisual.Drawing);
+
+            var image = new Image
+            {
+                Source = drawingImage,
+                Width = _viewModel.Cells.GetLength(0) * _viewModel.CellSize,
+                Height = _viewModel.Cells.GetLength(1) * _viewModel.CellSize
+            };
+
+            var offsetX = (MazeCanvas.ActualWidth - image.Width) / 2;
+            var offsetY = (MazeCanvas.ActualHeight - image.Height) / 2;
+
+            Canvas.SetLeft(image, offsetX);
+            Canvas.SetTop(image, offsetY);
+
+            MazeCanvas.Children.Add(image);
+        }
+
+        /// <summary>
+        /// Calculates the color for a given cell based on its position in the solution path.
+        /// The color gradient transitions from blue (start point) to red (end point).
+        /// </summary>
+        /// <param name="cell">The cell for which the color is to be calculated.</param>
+        /// <returns>The calculated color as a <see cref="Color"/>, representing the gradient from blue to red.</returns>
+        private Color CalcColor(Cell cell)
+        {
+            var cellIndex = _viewModel.SolvedPath.IndexOf(cell);
+            var totalSteps = _viewModel.SolvedPath.Count;
+
+            var red = (byte)(255 * cellIndex / (double)totalSteps);
+            var blue = (byte)(255 * (1 - cellIndex / (double)totalSteps));
+
+            return Color.FromArgb(128, red, 0, blue);
         }
 
         /// <summary>
@@ -197,7 +200,7 @@ namespace Maze_Simulation
         {
             _viewModel.ResetSolvedPath();
             var index = AlgorithmComboBox.SelectedIndex;
-            await Task.Run(() => _viewModel.StartAlgorithm(index));
+            await _viewModel.StartAlgorithm(index);
             DrawMaze();
         }
     }
