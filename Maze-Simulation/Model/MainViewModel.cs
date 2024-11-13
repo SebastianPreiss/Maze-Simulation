@@ -56,10 +56,12 @@ namespace Maze_Simulation.Model
         /// <param name="mazeHeight">The height of the maze.</param>
         public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight)
         {
+            _isBusy = true;
             int.TryParse(Seed, out var seed);
             var board = new BoardControl(mazeWidth, mazeHeight, seed);
             board.GenerateMaze();
             Cells = board.Cells;
+            _isBusy = false;
         }
 
         /// <summary>
@@ -178,7 +180,7 @@ namespace Maze_Simulation.Model
                 return;
             }
 
-            IsBusy = true;
+            _isBusy = true;
             try
             {
                 _stopwatch.Restart();
@@ -198,7 +200,7 @@ namespace Maze_Simulation.Model
             }
             finally
             {
-                IsBusy = false;
+                _isBusy = false;
                 _stopwatch.Stop();
                 Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
             }
