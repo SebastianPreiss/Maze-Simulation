@@ -4,11 +4,11 @@ namespace Maze_Simulation.SolvingAlgorithms
 {
     public class AStarSolver : IPathSolver
     {
-        private readonly Cell[,] _cells;
-        private readonly Cell _start;
-        private readonly Cell _target;
+        private Cell[,]? _cells;
+        private Cell? _start;
+        private Cell? _target;
 
-        public AStarSolver(Cell[,] cells)
+        public void InitSolver(Cell[,] cells)
         {
             _cells = cells;
             _start = _cells.Cast<Cell>().First(c => c.IsStart);
@@ -20,8 +20,10 @@ namespace Maze_Simulation.SolvingAlgorithms
         /// Starts the A* pathfinding algorithm to find the shortest path from the start cell to the target cell.
         /// </summary>
         /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
-        public async Task<List<Cell>> StartSolver()
+        public Task<List<Cell>?> StartSolver()
         {
+            if (_cells == null || _start == null || _target == null) return Task.FromResult<List<Cell>>(null);
+
             var openSet = new List<Cell> { _start };
             var cameFrom = new Dictionary<Cell, Cell>();
             var gScore = _cells.Cast<Cell>().ToDictionary(c => c, c => double.MaxValue);
@@ -33,7 +35,7 @@ namespace Maze_Simulation.SolvingAlgorithms
             {
                 var current = openSet.OrderBy(c => fScore[c]).First();
                 if (current == _target)
-                    return ReconstructPath(cameFrom, current);
+                    return Task.FromResult(ReconstructPath(cameFrom, current));
 
                 openSet.Remove(current);
 
@@ -50,10 +52,10 @@ namespace Maze_Simulation.SolvingAlgorithms
                 }
             }
 
-            return null;
+            return Task.FromResult<List<Cell>>(null);
         }
 
-        private static List<Cell> ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)
+        private static List<Cell>? ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)
         {
             var totalPath = new List<Cell> { current };
             while (cameFrom.ContainsKey(current))

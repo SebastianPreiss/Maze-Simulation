@@ -9,16 +9,22 @@ namespace Maze_Simulation.Model
 {
     public class MainViewModel : INotifyPropertyChanged
     {
+        //Maze properties
         public Cell[,]? Cells;
+
+        //Drawing properties
         public int CellSize = 16;
         public int OffsetX;
         public int OffsetY;
         public double MinPadding = 0.9;
+
+        //Pathfinding properties
         public List<Cell>? SolvedPath { get; private set; }
+        private readonly AStarSolver _aStarSolver;
 
-        private readonly Stopwatch _stopwatch;
+        //UI properties
         public event PropertyChangedEventHandler? PropertyChanged;
-
+        private readonly Stopwatch _stopwatch;
         private string _duration;
 
         public string Duration
@@ -31,20 +37,10 @@ namespace Maze_Simulation.Model
             }
         }
 
-        private bool _isBusy;
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                _isBusy = value;
-                OnPropertyChanged();
-            }
-        }
-
         public MainViewModel()
         {
             _stopwatch = new Stopwatch();
+            _aStarSolver = new AStarSolver();
             Duration = "0ms";
         }
 
@@ -56,12 +52,10 @@ namespace Maze_Simulation.Model
         /// <param name="mazeHeight">The height of the maze.</param>
         public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight)
         {
-            _isBusy = true;
             int.TryParse(Seed, out var seed);
             var board = new BoardControl(mazeWidth, mazeHeight, seed);
             board.GenerateMaze();
             Cells = board.Cells;
-            _isBusy = false;
         }
 
         /// <summary>
@@ -169,8 +163,9 @@ namespace Maze_Simulation.Model
 
             IPathSolver? solver = index switch
             {
-                0 => new AStarSolver(Cells),  // A*
-                1 => null,                    // Dijkstra (noch nicht implementiert)
+                0 => _aStarSolver,            // A*
+                1 => null,                    // lefthand 
+                2 => null,                    // righthand
                 _ => null                     // Default
             };
 
@@ -180,12 +175,13 @@ namespace Maze_Simulation.Model
                 return;
             }
 
-            _isBusy = true;
             try
             {
                 _stopwatch.Restart();
 
                 UpdateDurationInBackground();
+
+                solver.InitSolver(Cells);
 
                 SolvedPath = await solver.StartSolver();
 
@@ -200,7 +196,6 @@ namespace Maze_Simulation.Model
             }
             finally
             {
-                _isBusy = false;
                 _stopwatch.Stop();
                 Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
             }

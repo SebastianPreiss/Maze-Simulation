@@ -4,6 +4,7 @@ namespace Maze_Simulation.SolvingAlgorithms
 {
     internal interface IPathSolver
     {
-        public Task<List<Cell>> StartSolver();
+        public void InitSolver(Cell[,] cells);
+        public Task<List<Cell>?> StartSolver();
     }
 }

@@ -17,8 +17,6 @@ namespace Maze_Simulation
 
         private readonly MainViewModel _viewModel;
 
-        private DispatcherTimer _solverTimer;
-
         public MainWindow()
         {
             InitializeComponent();
