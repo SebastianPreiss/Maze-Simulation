@@ -6,11 +6,11 @@
     /// from available options, starting from a specified starting point.
     /// </summary>
     /// <remarks>
-    /// This class implements the <see cref="IMazeStrategy"/> interface and requires a 2D array of cells 
+    /// This class implements the <see cref="IBoardStrategy"/> interface and requires a 2D array of cells 
     /// and a seed value for random number generation to initialize the maze generation process.
     /// </remarks>
 
-    public class MazeGenerator : IMazeStrategy
+    public class MazeGenerator : IBoardStrategy
     {
         private readonly Cell[,]? _cells;
         private readonly Stack<Cell> _track = new();

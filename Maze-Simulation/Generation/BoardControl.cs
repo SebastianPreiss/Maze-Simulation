@@ -4,22 +4,27 @@
     {
         public int Width;
         public int Height;
-        public readonly Cell[,]? Cells;
-        private readonly IMazeStrategy _strategy;
+        public Cell[,]? Cells;
+        private readonly int _seed;
+        private IBoardStrategy _strategy;
 
         public BoardControl(int width, int height, int seed)
         {
             Width = width;
             Height = height;
             Cells = new Cell[Width, Height];
-            _strategy = new MazeGenerator(ref Cells, seed);
-            _strategy.Reset();
-            _strategy.SetStartingPoint(1, 2);
+            _seed = seed;
 
         }
 
+        /// <summary>
+        /// Generates a new maze using an maze strategy.
+        /// </summary>
         public void GenerateMaze()
         {
+            _strategy = new MazeGenerator(ref Cells, _seed);
+            _strategy.Reset();
+            _strategy.SetStartingPoint(1, 2);
             _strategy.Generate();
         }
     }

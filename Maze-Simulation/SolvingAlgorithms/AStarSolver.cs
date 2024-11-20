@@ -8,6 +8,10 @@ namespace Maze_Simulation.SolvingAlgorithms
         private Cell? _start;
         private Cell? _target;
 
+        /// <summary>
+        /// Initializes the solver with the maze cells.
+        /// </summary>
+        /// <param name="cells">Cells of the maze.</param>
         public void InitSolver(Cell[,] cells)
         {
             _cells = cells;
