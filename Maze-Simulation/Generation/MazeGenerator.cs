@@ -45,7 +45,7 @@
         }
 
         /// <summary>
-        /// Sets the starting point for maze generation at the specified coordinates.
+        /// Sets the starting point for generation at the specified coordinates.
         /// </summary>
         /// <param name="x">The x-coordinate of the starting point.</param>
         /// <param name="y">The y-coordinate of the starting point.</param>
@@ -114,6 +114,7 @@
             if (_cells is null) return;
             var numberOfCells = _cells.GetLength(0) * _cells.GetLength(1);
             var numberOfConnections = numberOfCells / 5;
+
             for (var i = 0; i < numberOfConnections; i++)
             {
                 var x = _random.Next(_cells.GetLength(0));

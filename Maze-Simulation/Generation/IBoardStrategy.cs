@@ -1,8 +1,8 @@
 ﻿namespace Maze_Simulation.Generation
 {
     /// <summary>
-    /// Defines the contract for a maze generation strategy.
-    /// Implementing classes should provide specific algorithms for maze generation.
+    /// Defines the contract for the board generation strategy.
+    /// Implementing classes should provide specific algorithms for board generation.
     /// </summary>
     public interface IBoardStrategy
     {
@@ -23,5 +23,4 @@
         /// </summary>
         void Generate();
     }
-
 }
