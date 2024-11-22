@@ -12,14 +12,28 @@
 
     public class MazeGenerator : IBoardStrategy
     {
+        private readonly bool _multiPath;
         private readonly Cell[,]? _cells;
         private readonly Stack<Cell> _track = new();
         private readonly Random _random;
 
-        public MazeGenerator(ref Cell[,]? cells, int seed = 42)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MazeGenerator"/> class.
+        /// This class uses a depth-first search algorithm to generate a maze and optionally adds multiple paths.
+        /// </summary>
+        /// <param name="cells">A reference to the 2D array of <see cref="Cell"/> objects representing the maze.</param>
+        /// <param name="seed">The seed for the random number generator, ensuring reproducibility of the maze structure. Default is 42.</param>
+        /// <param name="multiPath">
+        /// A boolean indicating whether to create multiple paths in the maze. 
+        /// If set to <c>true</c>, additional random connections between cells will be created.
+        /// Default is <c>false</c>.
+        /// </param>
+
+        public MazeGenerator(ref Cell[,]? cells, int seed = 42, bool multiPath = false)
         {
             _cells = cells;
             _random = new Random(seed);
+            _multiPath = multiPath;
         }
 
         /// <summary>
@@ -89,6 +103,55 @@
                         throw new ArgumentOutOfRangeException();
                 }
             }
+            if (_multiPath) AddRandomConnections();
+        }
+
+        /// <summary>
+        /// Adds random connections to create additional paths in the maze.
+        /// </summary>
+        private void AddRandomConnections()
+        {
+            if (_cells is null) return;
+            var numberOfCells = _cells.GetLength(0) * _cells.GetLength(1);
+            var numberOfConnections = numberOfCells / 5;
+            for (var i = 0; i < numberOfConnections; i++)
+            {
+                var x = _random.Next(_cells.GetLength(0));
+                var y = _random.Next(_cells.GetLength(1));
+
+                var cell = _cells[x, y];
+                var moves = Enum.GetValues(typeof(Move)).Cast<Move>().Where(m => m != Move.None).ToList();
+                var randomMove = moves[_random.Next(moves.Count)];
+                var (newX, newY) = GetNewPosition(cell, randomMove);
+
+                if (newX >= 0 && newX < _cells.GetLength(0) && newY >= 0 && newY < _cells.GetLength(1))
+                {
+                    var neighbor = _cells[newX, newY];
+                    switch (randomMove)
+                    {
+                        case Move.Top:
+                            cell.Walls[Cell.Top] = false;
+                            neighbor.Walls[Cell.Bottom] = false;
+                            break;
+                        case Move.Right:
+                            cell.Walls[Cell.Right] = false;
+                            neighbor.Walls[Cell.Left] = false;
+                            break;
+                        case Move.Bottom:
+                            cell.Walls[Cell.Bottom] = false;
+                            neighbor.Walls[Cell.Top] = false;
+                            break;
+                        case Move.Left:
+                            cell.Walls[Cell.Left] = false;
+                            neighbor.Walls[Cell.Right] = false;
+                            break;
+                        case Move.None:
+                            break;
+                        default:
+                            throw new ArgumentException($"Invalid move \"{randomMove}\"");
+                    }
+                }
+            }
         }
 
         private bool TryGetNextMove(Cell cell, out Move move)
@@ -124,7 +187,7 @@
                 Move.Right => (1, 0),
                 Move.Bottom => (0, -1),
                 Move.Left => (-1, 0),
-                _ => throw new ArgumentException(@$"Invalid move ""{{move}}""")
+                _ => throw new ArgumentException($"Invalid move \"{move}\"")
             };
         }
     }

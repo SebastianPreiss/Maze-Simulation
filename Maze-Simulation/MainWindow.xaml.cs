@@ -161,7 +161,7 @@ namespace Maze_Simulation
         private void OnGenerateClicked(object sender, RoutedEventArgs e)
         {
             _viewModel.ResetSolvedPath();
-            _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value);
+            _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value, MultiPath.IsChecked.Value);
             DrawMaze();
         }
 

@@ -50,11 +50,11 @@ namespace Maze_Simulation.Model
         /// <param name="Seed">The seed used for random generation of the maze.</param>
         /// <param name="mazeWidth">The width of the maze.</param>
         /// <param name="mazeHeight">The height of the maze.</param>
-        public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight)
+        public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight, bool multiPath)
         {
             int.TryParse(Seed, out var seed);
             var board = new BoardControl(mazeWidth, mazeHeight, seed);
-            board.GenerateMaze();
+            board.GenerateMaze(multiPath);
             Cells = board.Cells;
         }
 
