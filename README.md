@@ -2,6 +2,10 @@
 
 This project provides an application for generating and solving mazes. The mazes are created using the Depth First Search (DFS) algorithm, and various solving algorithms are implemented. Users can customize the maze size and the random seed for maze generation, allowing for the creation and testing of different maze configurations.
 
+## Table of Contents
+
+<h3 style="color:red">TODO!!!</h3>
+
 ## Generation
 
 ![generation](Doku/img/classDiagrams/generation.svg "Generation")
@@ -27,6 +31,7 @@ The maze generation process is handled by the **`MazeGenerator`** class, which i
 3. **Customizable Parameters**:
    - **Seed**: The random seed allows users to recreate specific maze layouts.
    - **Size**: Users can define the width and height of the maze.
+   - **multiPath**: Users can define if there are more than one path.
 
 ### Key Components
 
@@ -38,3 +43,5 @@ The maze generation process is handled by the **`MazeGenerator`** class, which i
 - [**`BoardUtils`**](/Maze-Simulation/Generation/BordUtils.cs): Contains static methods for initializing and resetting the board.
 
 ## Solving
+
+## Visualization
