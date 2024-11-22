@@ -31,13 +31,20 @@ class Cell {
     +Cell(int x, int y)
 }
 
+class IBoardStrategy {
+    +void Reset()
+    +void SetStartingPoint(int x, int y)
+    +void Generate()
+}
+
 class MazeGenerator {
     <<implements>> IBoardStrategy
     -readonly Cell[,]? _cells
     -readonly Stack~Cell~ _track
     -readonly Random _random
+    -readonly bool _multiPath
 
-    +MazeGenerator(ref Cell[,]? cells, int seed = 42)
+    +MazeGenerator(ref Cell[,]? cells, int seed = 42, bool multiPath = false)
     +void Reset()
     +void SetStartingPoint(int x, int y)
     +void Generate()
@@ -52,12 +59,6 @@ class BoardControl {
 
     +BoardControl(int width, int height, int seed)
     +void GenerateMaze()
-}
-
-class IBoardStrategy {
-    +void Reset()
-    +void SetStartingPoint(int x, int y)
-    +void Generate()
 }
 
 class BoardUtils {
