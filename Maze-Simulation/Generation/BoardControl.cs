@@ -1,5 +1,8 @@
 ﻿namespace Maze_Simulation.Generation
 {
+    /// <summary>
+    /// Represents a controller for managing a board, including its dimensions, cells, and maze generation logic.
+    /// </summary>
     public class BoardControl
     {
         public int Width;

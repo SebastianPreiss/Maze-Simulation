@@ -9,6 +9,10 @@ using System.Windows.Media;
 
 namespace Maze_Simulation.Model
 {
+    /// <summary>
+    /// Represents the main view model for managing the maze generation, pathfinding, 
+    /// and UI interactions in the application.
+    /// </summary>
     public class MainViewModel : INotifyPropertyChanged
     {
         //Maze properties
@@ -62,9 +66,10 @@ namespace Maze_Simulation.Model
         /// <summary>
         /// Generates a new maze board with the specified dimensions and seed value.
         /// </summary>
-        /// <param name="Seed">The seed used for random generation of the maze.</param>
-        /// <param name="mazeWidth">The width of the maze.</param>
-        /// <param name="mazeHeight">The height of the maze.</param>
+        /// <param name="Seed">The seed used for random generation of the board.</param>
+        /// <param name="mazeWidth">The width of the board.</param>
+        /// <param name="mazeHeight">The height of the board.</param>
+        /// <param name="multiPath">Specifies if multiple paths should be created.</param>
         public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight, bool multiPath)
         {
             int.TryParse(Seed, out var seed);
@@ -74,12 +79,10 @@ namespace Maze_Simulation.Model
         }
 
         /// <summary>
-        /// Draws the basic structure of the maze on the given canvas using the specified DrawingContext.
-        /// Calculates cell sizes and offsets based on the canvas dimensions.
-        /// Renders walls, start point, and target point for each cell in the maze grid.
+        /// Draws the basic structure of the board on the given canvas using the specified DrawingContext.
         /// </summary>
-        /// <param name="MazeCanvas">The canvas where the maze is drawn.</param>
-        /// <param name="dc">The DrawingContext used to render the maze elements.</param
+        /// <param name="MazeCanvas">The canvas where the board is drawn.</param>
+        /// <param name="dc">The DrawingContext used to render the board elements.</param>
         public void DramBasicBoard(Canvas MazeCanvas, DrawingContext dc)
         {
             if (Cells == null) return;
@@ -136,55 +139,52 @@ namespace Maze_Simulation.Model
 
         /// <summary>
         /// Draws the solved path of the maze onto the given DrawingContext.
-        /// Highlights cells that are part of the solution path, excluding the start and target cells.
-        /// Each path cell is drawn as a colored rectangle, with its color determined dynamically.
         /// </summary>
         /// <param name="dc">The DrawingContext used to render the solved path.</param>
         public void DrawSolvedPath(DrawingContext dc)
         {
+            var rectangleSize = CellSize * 0.4;
 
             for (var i = 0; i < Cells.GetLength(0); i++)
             {
                 for (var j = 0; j < Cells.GetLength(1); j++)
                 {
                     var cell = Cells[i, j];
-                    var x = i * CellSize + OffsetX;
-                    var y = j * CellSize + OffsetY;
 
+                    if (SolvedPath == null || !SolvedPath.Contains(cell) ||
+                        cell is not { IsStart: false, IsTarget: false }) continue;
 
-                    if (SolvedPath != null && SolvedPath.Contains(cell) && cell is { IsStart: false, IsTarget: false })
-                    {
+                    var pathX = cell.X * CellSize + OffsetX;
+                    var pathY = cell.Y * CellSize + OffsetY;
 
-                        var pathX = cell.X * CellSize + OffsetX;
-                        var pathY = cell.Y * CellSize + OffsetY;
-                        var rectangleSize = CellSize * 0.4;
+                    var cellIndex = SolvedPath.IndexOf(cell);
+                    var totalSteps = SolvedPath.Count;
 
-                        var pathColor = CalcColor(cell);
+                    var pathColor = Color.FromArgb(128,
+                        (byte)(255 * cellIndex / (double)totalSteps),
+                        0,
+                        (byte)(255 * (1 - cellIndex / (double)totalSteps)));
 
-                        dc.DrawRectangle(
-                            new SolidColorBrush(pathColor),
-                            new Pen(new SolidColorBrush(pathColor), 1),
-                            new Rect(
-                                pathX + (CellSize - rectangleSize) / 2,
-                                pathY + (CellSize - rectangleSize) / 2,
-                                rectangleSize,
-                                rectangleSize
-                            )
-                        );
-                    }
+                    dc.DrawRectangle(
+                        new SolidColorBrush(pathColor),
+                        new Pen(new SolidColorBrush(pathColor), 1),
+                        new Rect(
+                            pathX + (CellSize - rectangleSize) / 2,
+                            pathY + (CellSize - rectangleSize) / 2,
+                            rectangleSize,
+                            rectangleSize
+                        )
+                    );
                 }
             }
         }
 
         /// <summary>
         /// Draws the processed cells of the maze during the execution of the pathfinding algorithm.
-        /// The processed cells are represented as semi-transparent rectangles, scaled to fit within each maze cell.
-        /// If the path has already been solved, this method skips drawing the processed cells.
         /// </summary>
-        /// <param name="dc">The drawing context used for rendering the processed cells.</param>
+        /// <param name="dc">The DrawingContext used for rendering the processed cells.</param>
         /// <param name="processedCells">
         /// A collection of tuples containing the processed cells and their associated cost values.
-        /// The cost values are used to represent the processing state of the algorithm.
         /// </param>
         public void DrawProcessedCells(DrawingContext dc, IEnumerable<(Cell Cell, double Cost)> processedCells)
         {
@@ -219,56 +219,9 @@ namespace Maze_Simulation.Model
             }
         }
 
-        /// <summary>
-        /// Calculates the color for a given cell based on its position in the solution path.
-        /// The color gradient transitions from blue (start point) to red (end point).
-        /// </summary>
-        /// <param name="cell">The cell for which the color is to be calculated.</param>
-        /// <returns>The calculated color as a <see cref="Color"/>, representing the gradient from blue to red.</returns>
-        private Color CalcColor(Cell cell)
-        {
-            var cellIndex = SolvedPath.IndexOf(cell);
-            var totalSteps = SolvedPath.Count;
-
-            var red = (byte)(255 * cellIndex / (double)totalSteps);
-            var blue = (byte)(255 * (1 - cellIndex / (double)totalSteps));
-
-            return Color.FromArgb(128, red, 0, blue);
-        }
 
         /// <summary>
-        /// Calculates the size of each cell based on the given canvas dimensions and a minimum padding factor.
-        /// </summary>
-        /// <param name="canvasWidth">The width of the canvas to draw the maze.</param>
-        /// <param name="canvasHeight">The height of the canvas to draw the maze.</param>
-        private void CalcCellSize(int canvasWidth, int canvasHeight)
-        {
-            if (Cells == null) return;
-            var width = canvasWidth * MinPadding;
-            var height = canvasHeight * MinPadding;
-
-            var cellWidth = width / Cells.GetLength(0);
-            var cellHeight = height / Cells.GetLength(1);
-
-            CellSize = (int)(cellHeight < cellWidth ? cellHeight : cellWidth);
-        }
-
-        /// <summary>
-        /// Calculates the offset to center the maze within the given canvas dimensions.
-        /// </summary>
-        /// <param name="canvasWidth">The width of the canvas to draw the maze.</param>
-        /// <param name="canvasHeight">The height of the canvas to draw the maze.</param>
-        public void CalcOffset(int canvasWidth, int canvasHeight)
-        {
-            if (Cells == null) return;
-            var mazeWidth = Cells.GetLength(0) * CellSize;
-            var mazeHeight = Cells.GetLength(1) * CellSize;
-            OffsetX = (canvasWidth - mazeWidth) / 2;
-            OffsetY = (canvasHeight - mazeHeight) / 2;
-        }
-
-        /// <summary>
-        /// Handles user actions on a selected cell in the maze, allowing the user to set a start or target cell.
+        /// Handles user actions on a selected cell in the board, allowing the user to set a start or target cell.
         /// </summary>
         /// <param name="position">The position of the mouse click on the canvas.</param>
         public void SelectActionOnCell(Point position)
@@ -327,10 +280,10 @@ namespace Maze_Simulation.Model
         }
 
         /// <summary>
-        /// Starts the selected pathfinding algorithm (A* or Dijkstra) and calculates the solved path.
-        /// Displays an error if no maze is defined or if the selected algorithm is invalid.
+        /// Starts the selected pathfinding algorithm (A*, HandOnWall or BFS) and calculates the solved path.
         /// </summary>
-        /// <param name="index">The index of the algorithm to use (0 for A*, 1 for Dijkstra).</param>
+        /// <param name="index">The index of the algorithm to use (0 for A*, 1 for HandOnWall(left-handed), 2 for HandOnWall(right-handed) , 3 for Bfs).</param>
+        /// <param name="visualize">Specifies if the algorithm's steps should be visualized.</param>
         public async Task StartAlgorithm(int index, bool visualize)
         {
             if (Cells == null)
@@ -344,6 +297,7 @@ namespace Maze_Simulation.Model
                 0 => _aStarSolver,
                 1 => new HandOnWallSolver { UseLeftHand = true },
                 2 => new HandOnWallSolver { UseLeftHand = false },
+                3 => new BfsSolver(),
                 _ => null                     // Default
             };
 
@@ -385,19 +339,42 @@ namespace Maze_Simulation.Model
         }
 
         /// <summary>
-        /// Updates the list of processed cells and notifies the UI about the change.
-        /// This method is typically called when the set of processed cells in the pathfinding algorithm is updated.
+        /// Resets the solved path and duration, clearing any previously calculated paths.
         /// </summary>
-        /// <param name="processedCells">The updated list of processed cells, each associated with its cost value.</param>
+        public void ResetSolvedPath()
+        {
+            if (Cells == null) return;
+            SolvedPath?.Clear();
+            _stopwatch.Reset();
+        }
+
+        private void CalcCellSize(int canvasWidth, int canvasHeight)
+        {
+            if (Cells == null) return;
+            var width = canvasWidth * MinPadding;
+            var height = canvasHeight * MinPadding;
+
+            var cellWidth = width / Cells.GetLength(0);
+            var cellHeight = height / Cells.GetLength(1);
+
+            CellSize = (int)(cellHeight < cellWidth ? cellHeight : cellWidth);
+        }
+
+        private void CalcOffset(int canvasWidth, int canvasHeight)
+        {
+            if (Cells == null) return;
+            var mazeWidth = Cells.GetLength(0) * CellSize;
+            var mazeHeight = Cells.GetLength(1) * CellSize;
+            OffsetX = (canvasWidth - mazeWidth) / 2;
+            OffsetY = (canvasHeight - mazeHeight) / 2;
+        }
+
         private void OnProcessedCellsUpdated(IEnumerable<(Cell Cell, double Cost)> processedCells)
         {
             ProcessedCells = processedCells.ToList();
             OnPropertyChanged(nameof(ProcessedCells));
         }
 
-        /// <summary>
-        /// Updates the duration of the pathfinding algorithm in the background while the stopwatch is running.
-        /// </summary>
         private async Task UpdateDurationInBackground()
         {
             while (_stopwatch.IsRunning)
@@ -408,16 +385,6 @@ namespace Maze_Simulation.Model
                 });
                 await Task.Delay(500);
             }
-        }
-
-        /// <summary>
-        /// Resets the solved path and duration, clearing any previously calculated paths.
-        /// </summary>
-        public void ResetSolvedPath()
-        {
-            if (Cells == null) return;
-            SolvedPath?.Clear();
-            _stopwatch.Reset();
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

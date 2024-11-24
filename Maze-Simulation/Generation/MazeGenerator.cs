@@ -9,7 +9,6 @@
     /// This class implements the <see cref="IBoardStrategy"/> interface and requires a 2D array of cells 
     /// and a seed value for random number generation to initialize the maze generation process.
     /// </remarks>
-
     public class MazeGenerator : IBoardStrategy
     {
         private readonly bool _multiPath;

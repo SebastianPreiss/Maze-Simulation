@@ -1,7 +1,7 @@
 ﻿namespace Maze_Simulation.Generation
 {
     /// <summary>
-    /// All possible moves
+    /// Represents possible movement directions within a maze.
     /// </summary>
     public enum Move
     {

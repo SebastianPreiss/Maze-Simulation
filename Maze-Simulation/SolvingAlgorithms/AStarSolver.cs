@@ -2,6 +2,10 @@
 
 namespace Maze_Simulation.SolvingAlgorithms
 {
+    /// <summary>
+    /// Implements the A* algorithm to solve mazes. A* guarantees finding the shortest path
+    /// by combining the actual path cost (gScore) and an estimated cost (heuristic).
+    /// </summary>
     public class AStarSolver : IPathSolver
     {
         public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
@@ -27,6 +31,7 @@ namespace Maze_Simulation.SolvingAlgorithms
         /// <summary>
         /// Starts the A* pathfinding algorithm to find the shortest path from the start cell to the target cell.
         /// </summary>
+        /// /// <param name="visualize">If true, enables visualization of the algorithm's progress.</param>
         /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
         public async Task<List<Cell>> StartSolver(bool visualize)
         {

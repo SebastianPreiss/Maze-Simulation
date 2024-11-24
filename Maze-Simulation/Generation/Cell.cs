@@ -1,5 +1,8 @@
 ﻿namespace Maze_Simulation.Generation
 {
+    /// <summary>
+    /// Represents a single cell in the board, including its position, walls, and state.
+    /// </summary>
     public class Cell
     {
         public const int Top = 0;
