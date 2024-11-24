@@ -4,6 +4,10 @@ namespace Maze_Simulation.SolvingAlgorithms
 {
     public class AStarSolver : IPathSolver
     {
+        public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
+
+        private List<(Cell Cell, double Cost)> _processedCells = [];
+        public IEnumerable<(Cell Cell, double Cost)> ProcessedCells => _processedCells;
         private Cell[,]? _cells;
         private Cell? _start;
         private Cell? _target;
@@ -24,9 +28,9 @@ namespace Maze_Simulation.SolvingAlgorithms
         /// Starts the A* pathfinding algorithm to find the shortest path from the start cell to the target cell.
         /// </summary>
         /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
-        public Task<List<Cell>?> StartSolver()
+        public async Task<List<Cell>> StartSolver(bool visualize)
         {
-            if (_cells == null || _start == null || _target == null) return Task.FromResult<List<Cell>>(null);
+            if (_cells == null || _start == null || _target == null) return null;
 
             var openSet = new List<Cell> { _start };
             var cameFrom = new Dictionary<Cell, Cell>();
@@ -38,16 +42,31 @@ namespace Maze_Simulation.SolvingAlgorithms
             while (openSet.Any())
             {
                 var current = openSet.OrderBy(c => fScore[c]).First();
+
+                if (visualize)
+                {
+                    _processedCells.Add((current, gScore[current]));
+                    ProcessedCellsUpdated?.Invoke(_processedCells);
+                    await Task.Delay(50);
+                }
+
+
                 if (current == _target)
-                    return Task.FromResult(ReconstructPath(cameFrom, current));
+                {
+                    _processedCells.Clear();
+                    return ReconstructPath(cameFrom, current);
+                }
 
                 openSet.Remove(current);
 
                 foreach (var neighbor in GetNeighbors(current))
                 {
                     var tentativeGScore = gScore[current] + 1;
+
                     if (!(tentativeGScore < gScore[neighbor])) continue;
+
                     cameFrom[neighbor] = current;
+
                     gScore[neighbor] = tentativeGScore;
                     fScore[neighbor] = gScore[neighbor] + Heuristic(neighbor, _target);
 
@@ -56,7 +75,7 @@ namespace Maze_Simulation.SolvingAlgorithms
                 }
             }
 
-            return Task.FromResult<List<Cell>>(null);
+            return null;
         }
 
         private static List<Cell>? ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)

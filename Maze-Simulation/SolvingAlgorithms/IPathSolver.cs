@@ -2,9 +2,10 @@
 
 namespace Maze_Simulation.SolvingAlgorithms
 {
-    internal interface IPathSolver
+    public interface IPathSolver
     {
+        public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
         public void InitSolver(Cell[,] cells);
-        public Task<List<Cell>?> StartSolver();
+        public Task<List<Cell>> StartSolver(bool visualize);
     }
 }
