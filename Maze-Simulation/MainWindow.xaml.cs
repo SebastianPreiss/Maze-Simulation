@@ -1,5 +1,4 @@
 ﻿using Maze_Simulation.Model;
-using Maze_Simulation.SolvingAlgorithms;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -60,9 +59,9 @@ namespace Maze_Simulation
                 _viewModel.DrawSolvedPath(dc);
 
                 // Draw processed cells
-                if (_viewModel.Solver is AStarSolver aStarSolver && VisuSolver.IsChecked.Value)
+                if (VisuSolver.IsChecked.Value && _viewModel.Solver != null)
                 {
-                    _viewModel.DrawProcessedCells(dc, aStarSolver.ProcessedCells);
+                    _viewModel.DrawProcessedCells(dc, _viewModel.Solver.ProcessedCells);
                 }
             }
 

@@ -6,7 +6,7 @@ namespace Maze_Simulation.SolvingAlgorithms
     {
         public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
 
-        private List<(Cell Cell, double Cost)> _processedCells = [];
+        private readonly List<(Cell Cell, double Cost)> _processedCells = [];
         public IEnumerable<(Cell Cell, double Cost)> ProcessedCells => _processedCells;
         private Cell[,]? _cells;
         private Cell? _start;
@@ -32,24 +32,32 @@ namespace Maze_Simulation.SolvingAlgorithms
         {
             if (_cells == null || _start == null || _target == null) return null;
 
+            // Open set: a list of cells that need to be evaluated, starting with the start cell
             var openSet = new List<Cell> { _start };
+
+            // Dictionary to keep track of the most efficient previous cell for each visited cell
             var cameFrom = new Dictionary<Cell, Cell>();
+
+            // Dictionary to store the cost of the cheapest path from the start to each cell
             var gScore = _cells.Cast<Cell>().ToDictionary(c => c, c => double.MaxValue);
             gScore[_start] = 0;
+
+            // Dictionary to store the estimated total cost (gScore + heuristic) for each cell
             var fScore = _cells.Cast<Cell>().ToDictionary(c => c, c => double.MaxValue);
             fScore[_start] = Heuristic(_start, _target);
 
             while (openSet.Any())
             {
+                // Select the cell with the lowest fScore (best estimated total cost)
                 var current = openSet.OrderBy(c => fScore[c]).First();
 
+                // Visualization: process and display the current cell
                 if (visualize)
                 {
                     _processedCells.Add((current, gScore[current]));
                     ProcessedCellsUpdated?.Invoke(_processedCells);
                     await Task.Delay(50);
                 }
-
 
                 if (current == _target)
                 {
@@ -61,15 +69,18 @@ namespace Maze_Simulation.SolvingAlgorithms
 
                 foreach (var neighbor in GetNeighbors(current))
                 {
+                    // Tentative gScore: cost to move to the neighbor through the current cell
                     var tentativeGScore = gScore[current] + 1;
 
+                    // If this path to the neighbor is not better, skip it
                     if (!(tentativeGScore < gScore[neighbor])) continue;
 
+                    // Update the path and scores for the neighbor
                     cameFrom[neighbor] = current;
-
                     gScore[neighbor] = tentativeGScore;
                     fScore[neighbor] = gScore[neighbor] + Heuristic(neighbor, _target);
 
+                    // If the neighbor is not already in the open set, add it
                     if (!openSet.Contains(neighbor))
                         openSet.Add(neighbor);
                 }
@@ -77,6 +88,7 @@ namespace Maze_Simulation.SolvingAlgorithms
 
             return null;
         }
+
 
         private static List<Cell>? ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)
         {

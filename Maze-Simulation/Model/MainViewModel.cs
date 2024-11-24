@@ -341,16 +341,13 @@ namespace Maze_Simulation.Model
 
             Solver = index switch
             {
-                0 => _aStarSolver,            // A*
-                1 => null,                    // lefthand 
-                2 => null,                    // righthand
+                0 => _aStarSolver,
+                1 => new HandOnWallSolver { UseLeftHand = true },
+                2 => new HandOnWallSolver { UseLeftHand = false },
                 _ => null                     // Default
             };
 
-            if (Solver is AStarSolver aStarSolver)
-            {
-                aStarSolver.ProcessedCellsUpdated += OnProcessedCellsUpdated;
-            }
+            Solver.ProcessedCellsUpdated += OnProcessedCellsUpdated;
 
             if (Solver == null)
             {

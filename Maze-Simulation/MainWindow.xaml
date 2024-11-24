@@ -35,7 +35,8 @@
                     <Label Content="Select Algorithm" HorizontalAlignment="Left" Margin="8,12,0,0" VerticalAlignment="Top"/>
                     <ComboBox x:Name="AlgorithmComboBox" HorizontalAlignment="Center" Margin="0,38,0,0" VerticalAlignment="Top" Width="134" SelectedIndex="0">
                         <ComboBoxItem Content="A*"/>
-                        <ComboBoxItem Content="Dijkstra" />
+                        <ComboBoxItem Content="Hand on wall (left-handed)" />
+                        <ComboBoxItem Content="Hand on wall (right-handed)" />
                     </ComboBox>
                     <CheckBox x:Name="VisuSolver" IsChecked="True" Margin="30,65,-30,-65" >Visualize Solver</CheckBox>
 
