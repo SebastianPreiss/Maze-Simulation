@@ -104,6 +104,10 @@
                 }
             }
             if (_multiPath) AddRandomConnections();
+            foreach (var cell in _cells)
+            {
+                cell.IsVisited = false;
+            }
         }
 
         /// <summary>
