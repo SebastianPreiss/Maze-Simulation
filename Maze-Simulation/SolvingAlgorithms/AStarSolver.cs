@@ -33,7 +33,7 @@ namespace Maze_Simulation.SolvingAlgorithms
         /// </summary>
         /// /// <param name="visualize">If true, enables visualization of the algorithm's progress.</param>
         /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
-        public async Task<List<Cell>> StartSolver(bool visualize)
+        public async Task<IEnumerable<Cell>> StartSolver(bool visualize, int visualizationSpeed)
         {
             if (_cells == null || _start == null || _target == null) return null;
 
@@ -61,7 +61,7 @@ namespace Maze_Simulation.SolvingAlgorithms
                 {
                     _processedCells.Add((current, gScore[current]));
                     ProcessedCellsUpdated?.Invoke(_processedCells);
-                    await Task.Delay(50);
+                    await Task.Delay(visualizationSpeed);
                 }
 
                 if (current == _target)

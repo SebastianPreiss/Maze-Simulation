@@ -36,7 +36,7 @@ public class BfsSolver : IPathSolver
     /// <returns>
     /// A list of cells representing the shortest path, or null if no path is found.
     /// </returns>
-    public async Task<List<Cell>> StartSolver(bool visualize)
+    public async Task<IEnumerable<Cell>> StartSolver(bool visualize, int visualizationSpeed)
     {
         if (_cells == null || _start == null || _target == null) return null;
 
@@ -57,7 +57,7 @@ public class BfsSolver : IPathSolver
             {
                 _processedCells.Add((current, path.Count));
                 ProcessedCellsUpdated?.Invoke(_processedCells);
-                await Task.Delay(50);
+                await Task.Delay(visualizationSpeed);
             }
 
             if (current == _target)

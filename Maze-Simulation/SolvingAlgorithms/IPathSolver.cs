@@ -28,6 +28,6 @@ namespace Maze_Simulation.SolvingAlgorithms
         /// </summary>
         /// <param name="visualize">Indicates whether the solving process should be visualized.</param>
         /// <returns>A list of cells representing the found path, or <c>null</c> if no path was found.</returns>
-        public Task<List<Cell>> StartSolver(bool visualize);
+        public Task<IEnumerable<Cell>> StartSolver(bool visualize, int visualizationSpeed);
     }
 }

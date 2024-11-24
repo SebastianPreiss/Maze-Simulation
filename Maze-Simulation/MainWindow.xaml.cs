@@ -55,7 +55,7 @@ namespace Maze_Simulation
             var drawingVisualisation = new DrawingVisual();
             using (var dc = drawingVisualisation.RenderOpen())
             {
-                _viewModel.DramBasicBoard(MazeCanvas, dc);
+                _viewModel.DrawBasicBoard(MazeCanvas, dc);
                 _viewModel.DrawSolvedPath(dc);
 
                 // Draw processed cells
@@ -132,7 +132,7 @@ namespace Maze_Simulation
 
             _viewModel.ResetSolvedPath();
             var index = AlgorithmComboBox.SelectedIndex;
-            await _viewModel.StartAlgorithm(index, VisuSolver.IsChecked.Value);
+            await _viewModel.StartAlgorithm(index, VisuSolver.IsChecked.Value, (int)VisuSpeedSlider.Value);
             DrawMaze();
         }
     }

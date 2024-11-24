@@ -37,14 +37,16 @@
                         <ComboBoxItem Content="A*"/>
                         <ComboBoxItem Content="Hand on wall (left-handed)" />
                         <ComboBoxItem Content="Hand on wall (right-handed)" />
-                        <ComboBoxItem Content="BFS" />
+                        <ComboBoxItem Content="Breadth-First Search" />
                     </ComboBox>
-                    <CheckBox x:Name="VisuSolver" IsChecked="True" Margin="10,65,-10,-65" >Visualize Solver</CheckBox>
+                    <CheckBox x:Name="VisuSolver" IsChecked="True" Margin="10,70,-10,-70" >Visualize Solver</CheckBox>
+                    <Label Content="Visualization Speed" HorizontalAlignment="Left" Margin="6,86,0,0" VerticalAlignment="Top"/>
+                    <Slider x:Name="VisuSpeedSlider" HorizontalAlignment="Center" Margin="0,109,0,0" VerticalAlignment="Top" Width="174" Minimum="1" Maximum="100" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1"/>
 
-                    <Label x:Name="DurationHead" Content="Duration:" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,127,125,0"/>
-                    <Label x:Name="DurationContent" Content="{Binding Duration}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,127,70,0"/>
+                    <Label x:Name="DurationHead" Content="Duration:" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,150,125,0"/>
+                    <Label x:Name="DurationContent" Content="{Binding Duration}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,151,70,0" Height="25"/>
 
-                    <Button Content="Start Algorithm" HorizontalAlignment="Center" Margin="0,85,0,0" VerticalAlignment="Top" Width="174" Click="OnStartAlgorithm" />
+                    <Button Content="Start Algorithm" HorizontalAlignment="Center" Margin="0,132,0,0" VerticalAlignment="Top" Width="174" Click="OnStartAlgorithm" />
                 </Grid>
             </TabItem>
         </TabControl>

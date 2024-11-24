@@ -28,6 +28,7 @@ namespace Maze_Simulation.Model
         public List<Cell>? SolvedPath { get; private set; }
         public IPathSolver? Solver;
         private readonly AStarSolver _aStarSolver;
+        private readonly BfsSolver _bfsSolver;
 
         private List<(Cell Cell, double Cost)> _processedCells;
         public List<(Cell Cell, double Cost)> ProcessedCells
@@ -60,6 +61,7 @@ namespace Maze_Simulation.Model
         {
             _stopwatch = new Stopwatch();
             _aStarSolver = new AStarSolver();
+            _bfsSolver = new BfsSolver();
             Duration = "0:0.0";
         }
 
@@ -83,7 +85,7 @@ namespace Maze_Simulation.Model
         /// </summary>
         /// <param name="MazeCanvas">The canvas where the board is drawn.</param>
         /// <param name="dc">The DrawingContext used to render the board elements.</param>
-        public void DramBasicBoard(Canvas MazeCanvas, DrawingContext dc)
+        public void DrawBasicBoard(Canvas MazeCanvas, DrawingContext dc)
         {
             if (Cells == null) return;
 
@@ -284,7 +286,7 @@ namespace Maze_Simulation.Model
         /// </summary>
         /// <param name="index">The index of the algorithm to use (0 for A*, 1 for HandOnWall(left-handed), 2 for HandOnWall(right-handed) , 3 for Bfs).</param>
         /// <param name="visualize">Specifies if the algorithm's steps should be visualized.</param>
-        public async Task StartAlgorithm(int index, bool visualize)
+        public async Task StartAlgorithm(int index, bool visualize, int visualizationSpeed)
         {
             if (Cells == null)
             {
@@ -297,7 +299,7 @@ namespace Maze_Simulation.Model
                 0 => _aStarSolver,
                 1 => new HandOnWallSolver { UseLeftHand = true },
                 2 => new HandOnWallSolver { UseLeftHand = false },
-                3 => new BfsSolver(),
+                3 => _bfsSolver,
                 _ => null                     // Default
             };
 
@@ -318,7 +320,7 @@ namespace Maze_Simulation.Model
 
                 Solver.InitSolver(Cells);
 
-                SolvedPath = await Solver.StartSolver(visualize);
+                SolvedPath = (await Solver.StartSolver(visualize, visualizationSpeed)).ToList();
 
                 if (SolvedPath == null)
                 {
