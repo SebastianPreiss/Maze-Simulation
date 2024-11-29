@@ -2,6 +2,11 @@
 
 This project is a comprehensive application for generating and solving mazes. The mazes are created using the **Depth First Search (DFS)** algorithm, and multiple solving algorithms are available to explore and analyze. Users can customize maze dimensions, random seed, and configuration to suit various use cases or testing scenarios.
 
+<div style="display: flex; justify-content: space-around;">
+    <img src="./Doku/img/application/generation.gif" alt="generation" style="width: 45%;"/>
+    <img src="./Doku/img/application/solver.gif" alt="solving" style="width: 45%;"/>
+</div>
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -63,7 +68,7 @@ The application provides multiple maze-solving algorithms, implemented as classe
 
 ### Available Algorithms
 
-1. **A\***:
+1. **A-Star (A\*)**:
 
    - Uses a heuristic function to prioritize the shortest paths.
    - Balances efficiency with accuracy, offering a clear visual representation of its decision-making process.
@@ -73,7 +78,7 @@ The application provides multiple maze-solving algorithms, implemented as classe
    - Explores all paths level by level.
    - Guarantees the shortest path but lacks heuristic guidance, making it slower for large mazes.
 
-3. **Hand-on-Wall**:
+3. **Hand-on-Wall (left- and right-handed)**:
 
    - Mimics the real-world approach of tracing walls to navigate the maze.
    - Effective for mazes with walls connected to the boundary but may not yield optimal paths.
@@ -144,8 +149,6 @@ Real-time visualization is a core feature, providing an intuitive understanding 
 
 - **Export Functionality**:  
   Add the ability to export solved mazes as images or text files, enabling easy sharing and further analysis.
-
-Feel free to reach out for any questions or contributions!
 
 ## License
 
