@@ -5,10 +5,10 @@
     /// </summary>
     public enum Move
     {
-        None,
         Top,
         Right,
         Bottom,
-        Left
+        Left,
+        None
     }
 }

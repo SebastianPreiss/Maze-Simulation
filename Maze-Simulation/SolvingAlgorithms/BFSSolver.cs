@@ -67,7 +67,7 @@ public class BfsSolver : IPathSolver
             }
 
             // Explore neighbors
-            foreach (var neighbor in GetNeighbors(current))
+            foreach (var neighbor in _cells.GetNeighbors(current))
             {
                 if (visited.Contains(neighbor)) continue;
                 visited.Add(neighbor);
@@ -78,40 +78,5 @@ public class BfsSolver : IPathSolver
 
         // If the queue is empty and no path is found, return null
         return null;
-    }
-
-    private IEnumerable<Cell> GetNeighbors(Cell cell)
-    {
-        var directions = new Dictionary<Move, (int dx, int dy)>
-        {
-            { Move.Top, (0, 1) },
-            { Move.Right, (1, 0) },
-            { Move.Bottom, (0, -1) },
-            { Move.Left, (-1, 0) }
-        };
-
-        foreach (var direction in directions)
-        {
-            var x = cell.X + direction.Value.dx;
-            var y = cell.Y + direction.Value.dy;
-
-            if (x < 0 || x >= _cells.GetLength(0) || y < 0 || y >= _cells.GetLength(1)) continue;
-            if (!HasWall(cell, direction.Key))
-            {
-                yield return _cells[x, y];
-            }
-        }
-    }
-
-    private static bool HasWall(Cell cell, Move direction)
-    {
-        return direction switch
-        {
-            Move.Top => cell.Walls[Cell.Top],
-            Move.Right => cell.Walls[Cell.Right],
-            Move.Bottom => cell.Walls[Cell.Bottom],
-            Move.Left => cell.Walls[Cell.Left],
-            _ => true
-        };
     }
 }

@@ -19,7 +19,6 @@ namespace Maze_Simulation.Playground
             Height = height;
             Cells = new Cell[Width, Height];
             _seed = seed;
-
         }
 
         /// <summary>

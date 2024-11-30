@@ -29,7 +29,7 @@ namespace Maze_Simulation.SolvingAlgorithms
         }
 
         /// <summary>
-        /// Starts the "Hand on wall"-Algorithmus.
+        /// Starts the "Hand on wall"-Algorithms.
         /// </summary>
         /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
         public async Task<IEnumerable<Cell>> StartSolver(bool visualize, int visualizationSpeed)
@@ -43,11 +43,11 @@ namespace Maze_Simulation.SolvingAlgorithms
             while (current != _target)
             {
                 // Try to turn right first
-                var newDirection = UseLeftHand ? TurnLeft(_currentDirection) : TurnRight(_currentDirection);
+                var newDirection = Turn(_currentDirection);
 
                 if (CanMove(current, newDirection))
                 {
-                    // If we can move, update the direction and move
+                    // If we can move, update the move and move
                     _currentDirection = newDirection;
                     current = MoveTo(current, _currentDirection);
                 }
@@ -59,7 +59,7 @@ namespace Maze_Simulation.SolvingAlgorithms
                 else
                 {
                     // Otherwise, turn left
-                    _currentDirection = TurnLeft(_currentDirection);
+                    _currentDirection = Turn(_currentDirection);
                 }
 
                 path.Add(current);
@@ -76,11 +76,11 @@ namespace Maze_Simulation.SolvingAlgorithms
             return path;
         }
 
-        private bool CanMove(Cell cell, Move direction)
+        private bool CanMove(Cell cell, Move move)
         {
-            if (direction == Move.None) return false;
+            if (move == Move.None) return false;
 
-            var (dx, dy) = GetDirectionOffset(direction);
+            var (dx, dy) = move.GetOffset();
             var newX = cell.X + dx;
             var newY = cell.Y + dy;
 
@@ -89,60 +89,24 @@ namespace Maze_Simulation.SolvingAlgorithms
                 return false;
 
             // Check for walls
-            return !HasWall(cell, direction);
+            return !cell.HasWall(move);
         }
 
-        private Cell MoveTo(Cell cell, Move direction)
+        private Cell MoveTo(Cell cell, Move move)
         {
-            var (dx, dy) = GetDirectionOffset(direction);
+            var (dx, dy) = move.GetOffset();
             return _cells[cell.X + dx, cell.Y + dy];
         }
 
-        private static Move TurnRight(Move current)
+        private Move Turn(Move current)
         {
             return current switch
             {
-                Move.Top => Move.Right,
-                Move.Right => Move.Bottom,
-                Move.Bottom => Move.Left,
-                Move.Left => Move.Top,
+                Move.Top => UseLeftHand ? Move.Left : Move.Right,
+                Move.Left => UseLeftHand ? Move.Bottom : Move.Top,
+                Move.Bottom => UseLeftHand ? Move.Right : Move.Left,
+                Move.Right => UseLeftHand ? Move.Top : Move.Bottom,
                 _ => Move.None
-            };
-        }
-
-        private static Move TurnLeft(Move current)
-        {
-            return current switch
-            {
-                Move.Top => Move.Left,
-                Move.Left => Move.Bottom,
-                Move.Bottom => Move.Right,
-                Move.Right => Move.Top,
-                _ => Move.None
-            };
-        }
-
-        private static (int dx, int dy) GetDirectionOffset(Move direction)
-        {
-            return direction switch
-            {
-                Move.Top => (0, 1),
-                Move.Right => (1, 0),
-                Move.Bottom => (0, -1),
-                Move.Left => (-1, 0),
-                _ => (0, 0)
-            };
-        }
-
-        private static bool HasWall(Cell cell, Move direction)
-        {
-            return direction switch
-            {
-                Move.Top => cell.Walls[Cell.Top],
-                Move.Right => cell.Walls[Cell.Right],
-                Move.Bottom => cell.Walls[Cell.Bottom],
-                Move.Left => cell.Walls[Cell.Left],
-                _ => true
             };
         }
     }

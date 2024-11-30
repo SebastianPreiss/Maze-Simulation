@@ -72,7 +72,8 @@ namespace Maze_Simulation.SolvingAlgorithms
 
                 openSet.Remove(current);
 
-                foreach (var neighbor in GetNeighbors(current))
+
+                foreach (var neighbor in _cells.GetNeighbors(current))
                 {
                     // Tentative gScore: cost to move to the neighbor through the current cell
                     var tentativeGScore = gScore[current] + 1;
@@ -94,7 +95,6 @@ namespace Maze_Simulation.SolvingAlgorithms
             return null;
         }
 
-
         private static List<Cell>? ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)
         {
             var totalPath = new List<Cell> { current };
@@ -111,41 +111,5 @@ namespace Maze_Simulation.SolvingAlgorithms
         {
             return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
         }
-
-        private IEnumerable<Cell> GetNeighbors(Cell cell)
-        {
-            var directions = new Dictionary<Move, (int dx, int dy)>
-            {
-                { Move.Top, (0, 1) },
-                { Move.Right, (1, 0) },
-                { Move.Bottom, (0, -1) },
-                { Move.Left, (-1, 0) }
-            };
-
-            foreach (var direction in directions)
-            {
-                var x = cell.X + direction.Value.dx;
-                var y = cell.Y + direction.Value.dy;
-
-                if (x < 0 || x >= _cells.GetLength(0) || y < 0 || y >= _cells.GetLength(1)) continue;
-                if (!HasWall(cell, direction.Key))
-                {
-                    yield return _cells[x, y];
-                }
-            }
-        }
-
-        private static bool HasWall(Cell cell, Move direction)
-        {
-            return direction switch
-            {
-                Move.Top => cell.Walls[Cell.Top],
-                Move.Right => cell.Walls[Cell.Right],
-                Move.Bottom => cell.Walls[Cell.Bottom],
-                Move.Left => cell.Walls[Cell.Left],
-                _ => true
-            };
-        }
-
     }
 }

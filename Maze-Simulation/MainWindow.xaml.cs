@@ -48,7 +48,7 @@ namespace Maze_Simulation
         /// </summary>
         private void DrawMaze()
         {
-            if (_viewModel.Cells == null) return;
+            if (_viewModel.GameBoard?.Cells == null) return;
 
             MazeCanvas.Children.Clear();
 
@@ -70,8 +70,8 @@ namespace Maze_Simulation
             var image = new Image
             {
                 Source = drawingImage,
-                Width = _viewModel.Cells.GetLength(0) * _viewModel.CellSize,
-                Height = _viewModel.Cells.GetLength(1) * _viewModel.CellSize
+                Width = _viewModel.GameBoard.Cells.GetLength(0) * _viewModel.CellSize,
+                Height = _viewModel.GameBoard.Cells.GetLength(1) * _viewModel.CellSize
             };
 
             var offsetX = (MazeCanvas.ActualWidth - image.Width) / 2;

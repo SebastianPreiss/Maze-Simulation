@@ -29,5 +29,54 @@
         /// </summary>
         /// <param name="cells">The 2D array of cells to reset.</param>
         public static void Reset(this Cell[,]? cells) => cells.FillBlank();
+
+        /// <summary>
+        /// Retrieves the neighboring cells of a given cell that do not have a wall in the specified direction.
+        /// </summary>
+        /// <param name="cells">The two-dimensional array representing the grid of cells.</param>
+        /// <param name="cell">The cell for which neighbors should be retrieved.</param>
+        /// <returns>An enumeration of neighboring cells without a wall in the respective direction.</returns>
+        public static IEnumerable<Cell> GetNeighbors(this Cell[,] cells, Cell cell)
+        {
+            var directions = new Dictionary<Move, (int dx, int dy)>
+            {
+                { Move.Top, (0, 1) },
+                { Move.Right, (1, 0) },
+                { Move.Bottom, (0, -1) },
+                { Move.Left, (-1, 0) }
+            };
+
+            foreach (var direction in directions)
+            {
+                var x = cell.X + direction.Value.dx;
+                var y = cell.Y + direction.Value.dy;
+
+                if (x < 0 || x >= cells.GetLength(0) || y < 0 || y >= cells.GetLength(1)) continue;
+                if (!cell.HasWall(direction.Key))
+                {
+                    yield return cells[x, y];
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks if a given cell has a wall in a specific direction.
+        /// </summary>
+        /// <param name="cell">The cell to check.</param>
+        /// <param name="move">The direction to check for a wall.</param>
+        /// <returns>True if there is a wall in the specified direction; otherwise, false.</returns>
+        public static bool HasWall(this Cell cell, Move move) => cell.Walls[(int)move];
+
+        public static (int x, int y) GetOffset(this Move move)
+        {
+            return move switch
+            {
+                Move.Top => (0, 1),
+                Move.Right => (1, 0),
+                Move.Bottom => (0, -1),
+                Move.Left => (-1, 0),
+                _ => (0, 0)
+            };
+        }
     }
 }

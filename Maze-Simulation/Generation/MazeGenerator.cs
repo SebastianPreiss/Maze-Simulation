@@ -179,22 +179,10 @@ namespace Maze_Simulation.Generation
 
         private static (int x, int y) GetNewPosition(Cell current, Move move)
         {
-            var (offsetX, offsetY) = GetOffset(move);
+            var (offsetX, offsetY) = move.GetOffset();
             var newX = current.X + offsetX;
             var newY = current.Y + offsetY;
             return (newX, newY);
-        }
-
-        private static (int x, int y) GetOffset(Move move)
-        {
-            return move switch
-            {
-                Move.Top => (0, 1),
-                Move.Right => (1, 0),
-                Move.Bottom => (0, -1),
-                Move.Left => (-1, 0),
-                _ => throw new ArgumentException($"Invalid move \"{move}\"")
-            };
         }
     }
 }

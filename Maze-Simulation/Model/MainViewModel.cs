@@ -16,7 +16,7 @@ namespace Maze_Simulation.Model
     public class MainViewModel : INotifyPropertyChanged
     {
         //Maze properties
-        public Cell[,]? Cells;
+        public Board? GameBoard;
 
         //Drawing properties
         public int CellSize = 16;
@@ -59,6 +59,7 @@ namespace Maze_Simulation.Model
 
         public MainViewModel()
         {
+            GameBoard = new Board();
             _stopwatch = new Stopwatch();
             _aStarSolver = new AStarSolver();
             _bfsSolver = new BfsSolver();
@@ -74,10 +75,9 @@ namespace Maze_Simulation.Model
         /// <param name="multiPath">Specifies if multiple paths should be created.</param>
         public void GenerateBoard(string Seed, int mazeWidth, int mazeHeight, bool multiPath)
         {
-            int.TryParse(Seed, out var seed);
-            var board = new BoardControl(mazeWidth, mazeHeight, seed);
-            board.GenerateMaze(multiPath);
-            Cells = board.Cells;
+            if (!int.TryParse(Seed, out var seed)) throw new ArgumentException("The provided seed value is not a valid integer.", nameof(Seed)); ;
+            GameBoard?.InitBoard(mazeWidth, mazeHeight);
+            GameBoard?.GenerateMaze(multiPath, seed);
         }
 
         /// <summary>
@@ -87,25 +87,27 @@ namespace Maze_Simulation.Model
         /// <param name="dc">The DrawingContext used to render the board elements.</param>
         public void DrawBasicBoard(Canvas MazeCanvas, DrawingContext dc)
         {
-            if (Cells == null) return;
+            if (GameBoard?.Cells == null) return;
 
             CalcCellSize((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
             CalcOffset((int)MazeCanvas.ActualWidth, (int)MazeCanvas.ActualHeight);
 
-            for (var i = 0; i < Cells.GetLength(0); i++)
+            for (var i = 0; i < GameBoard.Cells.GetLength(0); i++)
             {
-                for (var j = 0; j < Cells.GetLength(1); j++)
+                for (var j = 0; j < GameBoard.Cells.GetLength(1); j++)
                 {
-                    var cell = Cells[i, j];
+                    var cell = GameBoard.Cells[i, j];
                     var x = i * CellSize + OffsetX;
                     var y = j * CellSize + OffsetY;
 
                     if (cell.Walls[Cell.Bottom])
                         dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x, y), new Point(x + CellSize, y));
                     if (cell.Walls[Cell.Right])
-                        dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x + CellSize, y), new Point(x + CellSize, y + CellSize));
+                        dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x + CellSize, y),
+                            new Point(x + CellSize, y + CellSize));
                     if (cell.Walls[Cell.Top])
-                        dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x, y + CellSize), new Point(x + CellSize, y + CellSize));
+                        dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x, y + CellSize),
+                            new Point(x + CellSize, y + CellSize));
                     if (cell.Walls[Cell.Left])
                         dc.DrawLine(new Pen(Brushes.Black, 1), new Point(x, y), new Point(x, y + CellSize));
 
@@ -135,7 +137,6 @@ namespace Maze_Simulation.Model
                         );
                     }
                 }
-
             }
         }
 
@@ -145,13 +146,14 @@ namespace Maze_Simulation.Model
         /// <param name="dc">The DrawingContext used to render the solved path.</param>
         public void DrawSolvedPath(DrawingContext dc)
         {
+            if (GameBoard == null || SolvedPath == null) return;
             var rectangleSize = CellSize * 0.4;
 
-            for (var i = 0; i < Cells.GetLength(0); i++)
+            for (var i = 0; i < GameBoard.Cells.GetLength(0); i++)
             {
-                for (var j = 0; j < Cells.GetLength(1); j++)
+                for (var j = 0; j < GameBoard.Cells.GetLength(1); j++)
                 {
-                    var cell = Cells[i, j];
+                    var cell = GameBoard.Cells[i, j];
 
                     if (SolvedPath == null || !SolvedPath.Contains(cell) ||
                         cell is not { IsStart: false, IsTarget: false }) continue;
@@ -234,10 +236,11 @@ namespace Maze_Simulation.Model
             var row = (int)(relativeX / CellSize);
             var column = (int)(relativeY / CellSize);
 
-            if (Cells == null || row < 0 || row >= Cells.GetLength(0) || column < 0 ||
-                column >= Cells.GetLength(1)) return;
+            if (GameBoard == null || row < 0 || row >= GameBoard.Cells.GetLength(0) || column < 0 ||
+                column >= GameBoard.Cells.GetLength(1)) return;
 
-            var clickedCell = Cells[row, column];
+            var clickedCell = GameBoard.Cells[row, column];
+
             var dialog = new CellActionDialog();
             if (dialog.ShowDialog() != true) return;
             switch (dialog.SelectedAction)
@@ -250,7 +253,7 @@ namespace Maze_Simulation.Model
                         break;
                     }
 
-                    foreach (var cell in Cells)
+                    foreach (var cell in GameBoard.Cells)
                     {
                         cell.IsStart = false;
                     }
@@ -267,7 +270,7 @@ namespace Maze_Simulation.Model
                         break;
                     }
 
-                    foreach (var cell in Cells)
+                    foreach (var cell in GameBoard.Cells)
                     {
                         cell.IsTarget = false;
                     }
@@ -288,7 +291,7 @@ namespace Maze_Simulation.Model
         /// <param name="visualize">Specifies if the algorithm's steps should be visualized.</param>
         public async Task StartAlgorithm(int index, bool visualize, int visualizationSpeed)
         {
-            if (Cells == null)
+            if (GameBoard == null)
             {
                 MessageBox.Show("No Maze defined", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -318,7 +321,7 @@ namespace Maze_Simulation.Model
 
                 UpdateDurationInBackground();
 
-                Solver.InitSolver(Cells);
+                Solver.InitSolver(GameBoard.Cells);
 
                 SolvedPath = (await Solver.StartSolver(visualize, visualizationSpeed)).ToList();
 
@@ -345,28 +348,28 @@ namespace Maze_Simulation.Model
         /// </summary>
         public void ResetSolvedPath()
         {
-            if (Cells == null) return;
+            if (GameBoard == null) return;
             SolvedPath?.Clear();
             _stopwatch.Reset();
         }
 
         private void CalcCellSize(int canvasWidth, int canvasHeight)
         {
-            if (Cells == null) return;
+            if (GameBoard == null) return;
             var width = canvasWidth * MinPadding;
             var height = canvasHeight * MinPadding;
 
-            var cellWidth = width / Cells.GetLength(0);
-            var cellHeight = height / Cells.GetLength(1);
+            var cellWidth = width / GameBoard.Cells.GetLength(0);
+            var cellHeight = height / GameBoard.Cells.GetLength(1);
 
             CellSize = (int)(cellHeight < cellWidth ? cellHeight : cellWidth);
         }
 
         private void CalcOffset(int canvasWidth, int canvasHeight)
         {
-            if (Cells == null) return;
-            var mazeWidth = Cells.GetLength(0) * CellSize;
-            var mazeHeight = Cells.GetLength(1) * CellSize;
+            if (GameBoard == null) return;
+            var mazeWidth = GameBoard.Cells.GetLength(0) * CellSize;
+            var mazeHeight = GameBoard.Cells.GetLength(1) * CellSize;
             OffsetX = (canvasWidth - mazeWidth) / 2;
             OffsetY = (canvasHeight - mazeHeight) / 2;
         }
@@ -385,7 +388,7 @@ namespace Maze_Simulation.Model
                 {
                     Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
                 });
-                await Task.Delay(500);
+                await Task.Delay(50);
             }
         }
 
