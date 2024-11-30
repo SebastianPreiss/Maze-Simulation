@@ -1,26 +1,17 @@
-﻿namespace Maze_Simulation.Generation
+﻿namespace Maze_Simulation.Generation;
+
+using Shared;
+
+/// <summary>
+/// Defines the contract for the board generation strategy.
+/// Implementing classes should provide specific algorithms for board generation.
+/// </summary>
+public interface IBoardStrategy
 {
+    int Seed { set; }
+
     /// <summary>
-    /// Defines the contract for the board generation strategy.
-    /// Implementing classes should provide specific algorithms for board generation.
+    /// Generates the board based on the implemented algorithm.
     /// </summary>
-    public interface IBoardStrategy
-    {
-        /// <summary>
-        /// Resets the strategy to its initial state, clearing any modifications made during generation.
-        /// </summary>
-        void Reset();
-
-        /// <summary>
-        /// Sets the starting point for the generation at the specified coordinates.
-        /// </summary>
-        /// <param name="x">The x-coordinate of the starting point.</param>
-        /// <param name="y">The y-coordinate of the starting point.</param>
-        void SetStartingPoint(int x, int y);
-
-        /// <summary>
-        /// Generates the board based on the implemented algorithm.
-        /// </summary>
-        void Generate();
-    }
+    Board Generate(int width, int height);
 }

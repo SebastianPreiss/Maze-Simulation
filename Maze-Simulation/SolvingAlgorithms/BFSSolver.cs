@@ -1,4 +1,4 @@
-﻿using Maze_Simulation.Playground;
+﻿using Maze_Simulation.Shared;
 
 namespace Maze_Simulation.SolvingAlgorithms;
 
@@ -25,8 +25,10 @@ public class BfsSolver : IPathSolver
     public void InitSolver(Cell[,] cells)
     {
         _cells = cells;
-        _start = _cells.Cast<Cell>().First(c => c.IsStart);
-        _target = _cells.Cast<Cell>().First(c => c.IsTarget);
+        //_start = _cells.Cast<Cell>().First(c => c.IsStart);
+        //_target = _cells.Cast<Cell>().First(c => c.IsTarget);
+        _start = _cells[0, 0];
+        _target = _cells[cells.GetLength(0) - 1, cells.GetLength(1) - 1];
     }
 
     /// <summary>
@@ -67,13 +69,13 @@ public class BfsSolver : IPathSolver
             }
 
             // Explore neighbors
-            foreach (var neighbor in _cells.GetNeighbors(current))
-            {
-                if (visited.Contains(neighbor)) continue;
-                visited.Add(neighbor);
-                var newPath = new List<Cell>(path) { neighbor };
-                queue.Enqueue(newPath);
-            }
+            //foreach (var neighbor in _cells.GetNeighbors(current))
+            //{
+            //    if (visited.Contains(neighbor)) continue;
+            //    visited.Add(neighbor);
+            //    var newPath = new List<Cell>(path) { neighbor };
+            //    queue.Enqueue(newPath);
+            //}
         }
 
         // If the queue is empty and no path is found, return null

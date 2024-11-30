@@ -1,4 +1,4 @@
-﻿using Maze_Simulation.Playground;
+﻿using Maze_Simulation.Shared;
 
 namespace Maze_Simulation.SolvingAlgorithms
 {
@@ -15,7 +15,7 @@ namespace Maze_Simulation.SolvingAlgorithms
         private Cell[,]? _cells;
         private Cell? _start;
         private Cell? _target;
-        private Move _currentDirection;
+        private Direction _currentDirection;
 
         /// <summary>
         /// Initializes the solver with the maze cells.
@@ -24,8 +24,10 @@ namespace Maze_Simulation.SolvingAlgorithms
         public void InitSolver(Cell[,] cells)
         {
             _cells = cells;
-            _start = _cells.Cast<Cell>().First(c => c.IsStart);
-            _target = _cells.Cast<Cell>().First(c => c.IsTarget);
+            //_start = _cells.Cast<Cell>().First(c => c.IsStart);
+            //_target = _cells.Cast<Cell>().First(c => c.IsTarget);
+            _start = _cells[0, 0];
+            _target = _cells[cells.GetLength(0) - 1, cells.GetLength(1) - 1];
         }
 
         /// <summary>
@@ -38,7 +40,7 @@ namespace Maze_Simulation.SolvingAlgorithms
 
             var path = new List<Cell> { _start };
             var current = _start;
-            _currentDirection = UseLeftHand ? Move.Right : Move.Left;
+            _currentDirection = UseLeftHand ? Direction.Right : Direction.Left;
 
             while (current != _target)
             {
@@ -47,7 +49,7 @@ namespace Maze_Simulation.SolvingAlgorithms
 
                 if (CanMove(current, newDirection))
                 {
-                    // If we can move, update the move and move
+                    // If we can direction, update the direction and direction
                     _currentDirection = newDirection;
                     current = MoveTo(current, _currentDirection);
                 }
@@ -76,11 +78,11 @@ namespace Maze_Simulation.SolvingAlgorithms
             return path;
         }
 
-        private bool CanMove(Cell cell, Move move)
+        private bool CanMove(Cell cell, Direction direction)
         {
-            if (move == Move.None) return false;
+            if (direction == Direction.None) return false;
 
-            var (dx, dy) = move.GetOffset();
+            var (dx, dy) = direction.GetOffset();
             var newX = cell.X + dx;
             var newY = cell.Y + dy;
 
@@ -89,24 +91,25 @@ namespace Maze_Simulation.SolvingAlgorithms
                 return false;
 
             // Check for walls
-            return !cell.HasWall(move);
+            //return !cell.HasWall(direction);
+            return false;
         }
 
-        private Cell MoveTo(Cell cell, Move move)
+        private Cell MoveTo(Cell cell, Direction direction)
         {
-            var (dx, dy) = move.GetOffset();
+            var (dx, dy) = direction.GetOffset();
             return _cells[cell.X + dx, cell.Y + dy];
         }
 
-        private Move Turn(Move current)
+        private Direction Turn(Direction current)
         {
             return current switch
             {
-                Move.Top => UseLeftHand ? Move.Left : Move.Right,
-                Move.Left => UseLeftHand ? Move.Bottom : Move.Top,
-                Move.Bottom => UseLeftHand ? Move.Right : Move.Left,
-                Move.Right => UseLeftHand ? Move.Top : Move.Bottom,
-                _ => Move.None
+                Direction.Top => UseLeftHand ? Direction.Left : Direction.Right,
+                Direction.Left => UseLeftHand ? Direction.Bottom : Direction.Top,
+                Direction.Bottom => UseLeftHand ? Direction.Right : Direction.Left,
+                Direction.Right => UseLeftHand ? Direction.Top : Direction.Bottom,
+                _ => Direction.None
             };
         }
     }

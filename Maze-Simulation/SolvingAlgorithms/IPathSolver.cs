@@ -1,4 +1,4 @@
-﻿using Maze_Simulation.Playground;
+﻿using Maze_Simulation.Shared;
 
 namespace Maze_Simulation.SolvingAlgorithms
 {

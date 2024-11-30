@@ -1,4 +1,4 @@
-﻿using Maze_Simulation.Playground;
+﻿using Maze_Simulation.Shared;
 
 namespace Maze_Simulation.SolvingAlgorithms
 {
@@ -23,8 +23,10 @@ namespace Maze_Simulation.SolvingAlgorithms
         public void InitSolver(Cell[,] cells)
         {
             _cells = cells;
-            _start = _cells.Cast<Cell>().First(c => c.IsStart);
-            _target = _cells.Cast<Cell>().First(c => c.IsTarget);
+            //_start = _cells.Cast<Cell>().First(c => c.IsStart);
+            //_target = _cells.Cast<Cell>().First(c => c.IsTarget);
+            _start = _cells[0, 0];
+            _target = _cells[cells.GetLength(0) - 1, cells.GetLength(1) - 1];
         }
 
 
@@ -73,23 +75,23 @@ namespace Maze_Simulation.SolvingAlgorithms
                 openSet.Remove(current);
 
 
-                foreach (var neighbor in _cells.GetNeighbors(current))
-                {
-                    // Tentative gScore: cost to move to the neighbor through the current cell
-                    var tentativeGScore = gScore[current] + 1;
+                //foreach (var neighbor in _cells.GetNeighbors(current))
+                //{
+                //    // Tentative gScore: cost to move to the neighbor through the current cell
+                //    var tentativeGScore = gScore[current] + 1;
 
-                    // If this path to the neighbor is not better, skip it
-                    if (!(tentativeGScore < gScore[neighbor])) continue;
+                //    // If this path to the neighbor is not better, skip it
+                //    if (!(tentativeGScore < gScore[neighbor])) continue;
 
-                    // Update the path and scores for the neighbor
-                    cameFrom[neighbor] = current;
-                    gScore[neighbor] = tentativeGScore;
-                    fScore[neighbor] = gScore[neighbor] + Heuristic(neighbor, _target);
+                //    // Update the path and scores for the neighbor
+                //    cameFrom[neighbor] = current;
+                //    gScore[neighbor] = tentativeGScore;
+                //    fScore[neighbor] = gScore[neighbor] + Heuristic(neighbor, _target);
 
-                    // If the neighbor is not already in the open set, add it
-                    if (!openSet.Contains(neighbor))
-                        openSet.Add(neighbor);
-                }
+                //    // If the neighbor is not already in the open set, add it
+                //    if (!openSet.Contains(neighbor))
+                //        openSet.Add(neighbor);
+                //}
             }
 
             return null;
