@@ -12,22 +12,12 @@ namespace Maze_Simulation.Playground
             Cells.FillBlank();
         }
 
-        public void ResetBoard()
-        {
-            Cells.Reset();
-        }
-
         public void GenerateMaze(bool multiPath, int seed)
         {
             var mazeGenerator = new MazeGenerator(ref Cells, seed, multiPath);
             mazeGenerator.Reset();
             mazeGenerator.SetStartingPoint(1, 2);
             mazeGenerator.Generate();
-        }
-
-        public void SolveMaze()
-        {
-
         }
     }
 }

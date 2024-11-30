@@ -67,6 +67,12 @@
         /// <returns>True if there is a wall in the specified direction; otherwise, false.</returns>
         public static bool HasWall(this Cell cell, Move move) => cell.Walls[(int)move];
 
+        /// <summary>
+        /// Returns the offset (x, y) for a specific movement direction.
+        /// </summary>
+        /// <param name="move">The movement direction for which to calculate the offset.</param>
+        /// <returns>A tuple containing the offset values (x, y) corresponding to the specified movement direction.</returns>
+
         public static (int x, int y) GetOffset(this Move move)
         {
             return move switch

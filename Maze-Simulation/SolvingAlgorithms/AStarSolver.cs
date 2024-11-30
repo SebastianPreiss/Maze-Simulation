@@ -95,7 +95,7 @@ namespace Maze_Simulation.SolvingAlgorithms
             return null;
         }
 
-        private static List<Cell>? ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)
+        private static IEnumerable<Cell>? ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom, Cell current)
         {
             var totalPath = new List<Cell> { current };
             while (cameFrom.ContainsKey(current))
