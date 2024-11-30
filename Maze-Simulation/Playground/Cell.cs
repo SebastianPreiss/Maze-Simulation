@@ -1,4 +1,4 @@
-﻿namespace Maze_Simulation.Generation
+﻿namespace Maze_Simulation.Playground
 {
     /// <summary>
     /// Represents a single cell in the board, including its position, walls, and state.

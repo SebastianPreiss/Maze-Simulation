@@ -1,4 +1,4 @@
-﻿namespace Maze_Simulation.Generation
+﻿namespace Maze_Simulation.Playground
 {
     /// <summary>
     /// Represents possible movement directions within a maze.

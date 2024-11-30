@@ -1,4 +1,6 @@
-﻿namespace Maze_Simulation.Generation
+﻿using Maze_Simulation.Playground;
+
+namespace Maze_Simulation.Generation
 {
     /// <summary>
     /// Represents a maze generator that utilizes the Depth First Search algorithm to create a maze. 

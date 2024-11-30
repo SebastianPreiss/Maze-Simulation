@@ -1,4 +1,4 @@
-﻿using Maze_Simulation.Generation;
+﻿using Maze_Simulation.Playground;
 
 namespace Maze_Simulation.SolvingAlgorithms
 {

@@ -1,4 +1,4 @@
-﻿namespace Maze_Simulation.Generation
+﻿namespace Maze_Simulation.Playground
 {
     /// <summary>
     /// Provides utility methods for initializing and resetting a 2D array of cells.

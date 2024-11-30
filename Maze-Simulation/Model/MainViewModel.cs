@@ -1,4 +1,4 @@
-﻿using Maze_Simulation.Generation;
+﻿using Maze_Simulation.Playground;
 using Maze_Simulation.SolvingAlgorithms;
 using System.ComponentModel;
 using System.Diagnostics;

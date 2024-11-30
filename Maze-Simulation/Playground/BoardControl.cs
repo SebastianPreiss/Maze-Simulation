@@ -1,4 +1,6 @@
-﻿namespace Maze_Simulation.Generation
+﻿using Maze_Simulation.Generation;
+
+namespace Maze_Simulation.Playground
 {
     /// <summary>
     /// Represents a controller for managing a board, including its dimensions, cells, and maze generation logic.
