@@ -7,7 +7,7 @@ namespace Maze_Simulation.SolvingAlgorithms;
 /// BFS explores all possible paths in a breadth-first manner, guaranteeing the shortest path
 /// in an unweighted grid or maze. The algorithm uses a queue to manage paths and avoids revisiting cells.
 /// </summary>
-public class BfsSolver : IPathSolver
+public class BfsSolver //: IPathSolver
 {
     public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
 

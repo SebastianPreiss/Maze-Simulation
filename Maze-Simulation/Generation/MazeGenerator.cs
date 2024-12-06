@@ -1,7 +1,7 @@
-﻿using Maze_Simulation.Shared;
-using System.Diagnostics.CodeAnalysis;
+﻿namespace Maze_Simulation.Generation;
 
-namespace Maze_Simulation.Generation;
+using Maze_Simulation.Shared;
+using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
 /// Represents a maze generator that utilizes the Depth First Search algorithm to create a maze. 
@@ -34,7 +34,6 @@ public class MazeGenerator : IBoardStrategy
     /// If set to <c>true</c>, additional random connections between cells will be created.
     /// Default is <c>false</c>.
     /// </param>
-
     public MazeGenerator(bool multiPath = false)
     {
         _multiPath = multiPath;
@@ -50,7 +49,8 @@ public class MazeGenerator : IBoardStrategy
         _board = new Board(width, height);
 
         //init starting point(might be done by a strategy)
-        _track.Push(_board[0, 0]);
+        var start = new Position(0, 0);
+        _track.Push(_board[start]);
 
         while (_track.Count > 0)
         {
@@ -63,8 +63,7 @@ public class MazeGenerator : IBoardStrategy
                 continue;
             }
             _track.Push(next);
-            ConnectCells(ref current, ref next, move);
-
+            ConnectCells(current, next, move);
         }
         if (_multiPath) AddRandomConnections();
         return _board;
@@ -85,12 +84,12 @@ public class MazeGenerator : IBoardStrategy
         {
             var x = _random.Next(_board.Width);
             var y = _random.Next(_board.Height);
-            var current = _board[x, y];
+            var current = _board[new Position(x, y)];
             var direction = directions[_random.Next(directions.Length)];
 
-            if (TryMove(current, direction, out var next))
+            if (BoardUtils.TryMove(_board, current, direction, out var next))
             {
-                ConnectCells(ref current, ref next, direction);
+                ConnectCells(current, _board[next], direction);
             }
         }
     }
@@ -100,39 +99,16 @@ public class MazeGenerator : IBoardStrategy
         direction = Direction.None;
         next = default;
         if (_collapsed.GetValueOrDefault(cell, false)) return false;
-
-        var available = GetWalls(cell).ToList();
-        while (available.Any())
+        foreach (var (dir, position) in BoardUtils.GetAvailableDirections(_board, cell, new BoardUtils.WallStrategy(), new BoardUtils.RandomNextStrategy(_random)))
         {
-            var index = _random.Next(available.Count);
-            direction = available[index];
-            available.RemoveAt(index);
-
-            if (!TryMove(cell, direction, out next)) continue;
+            next = _board[position];
+            direction = dir;
             if (!_collapsed.GetValueOrDefault(next, false) && !_visited.GetValueOrDefault(next, false)) return true;
         }
         return false;
     }
 
-    private bool TryMove(Cell cell, Direction direction, [NotNullWhen(true)] out Cell? next)
-    {
-        next = default;
-        var (newX, newY) = GetNewPosition(cell, direction);
-        if (newX >= _board.Width || newX < 0) return false;
-        if (newY >= _board.Height || newY < 0) return false;
-        next = _board[newX, newY];
-        return true;
-    }
-
-    private static IEnumerable<Direction> GetWalls(Cell cell)
-    {
-        if (cell[Direction.Top]) yield return Direction.Top;
-        if (cell[Direction.Right]) yield return Direction.Right;
-        if (cell[Direction.Bottom]) yield return Direction.Bottom;
-        if (cell[Direction.Left]) yield return Direction.Left;
-    }
-
-    private static void ConnectCells(ref Cell a, ref Cell b, Direction connection)
+    private static void ConnectCells(Cell a, Cell b, Direction connection)
     {
         var opening = GetOpposite(connection);
 
@@ -150,13 +126,5 @@ public class MazeGenerator : IBoardStrategy
             Direction.Left => Direction.Right,
             _ => throw new ArgumentException($"Invalid connection \"{connection}\"")
         };
-    }
-
-    private static (int x, int y) GetNewPosition(Cell current, Direction move)
-    {
-        var (offsetX, offsetY) = move.GetOffset();
-        var newX = current.X + offsetX;
-        var newY = current.Y + offsetY;
-        return (newX, newY);
     }
 }

@@ -5,7 +5,7 @@ namespace Maze_Simulation.SolvingAlgorithms
     /// <summary>
     /// Implements the "Hand on Wall" algorithm to solve a maze.
     /// </summary>
-    public class HandOnWallSolver : IPathSolver
+    public class HandOnWallSolver //: IPathSolver
     {
         public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
         public bool UseLeftHand { get; set; } = false;

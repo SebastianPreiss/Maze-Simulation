@@ -1,11 +1,11 @@
-﻿namespace Maze_Simulation.Shared;
+﻿using System.Collections;
 
-public class Board
+namespace Maze_Simulation.Shared;
+
+public class Board : IEnumerable<Cell>
 {
     private readonly Cell[,] _cells;
 
-    public Cell? Start { get; set; }
-    public Cell? Target { get; set; }
     public int Width => _cells.GetLength(0);
     public int Height => _cells.GetLength(1);
 
@@ -15,7 +15,7 @@ public class Board
         FillBlank();
     }
 
-    public Cell this[int x, int y] => _cells[x, y];
+    public Cell this[Position position] => _cells[position.X, position.Y];
 
     /// <summary>
     /// Initializes an empty board.
@@ -29,5 +29,15 @@ public class Board
                 _cells[i, j] = new Cell(i, j);
             }
         }
+    }
+
+    public IEnumerator<Cell> GetEnumerator()
+    {
+        return _cells.Cast<Cell>().GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

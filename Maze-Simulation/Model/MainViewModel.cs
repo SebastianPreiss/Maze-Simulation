@@ -6,6 +6,7 @@ using SolvingAlgorithms;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Windows;
 
 /// <summary>
 /// Represents the main view model for managing the maze generation, pathfinding, 
@@ -15,25 +16,12 @@ public class MainViewModel : INotifyPropertyChanged
 {
     //Maze properties
     public Board? Board { get; private set; }
+    public Position? Start { get; private set; }
+    public Position? Target { get; private set; }
+    public Solve? Solve { get; private set; }
 
     public List<IBoardStrategy> Generators { get; } = [];
     public List<IPathSolver> Solvers { get; } = [];
-
-    //Pathfinding properties
-    public List<Cell>? SolvedPath { get; private set; }
-    public IPathSolver? Solver;
-
-    private List<(Cell Cell, double Cost)> _processedCells;
-    public List<(Cell Cell, double Cost)> ProcessedCells
-    {
-        get => _processedCells;
-        set
-        {
-            _processedCells = value;
-            OnPropertyChanged(nameof(ProcessedCells));
-        }
-    }
-    private bool _isPathSolved;
 
     //UI properties
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -57,9 +45,9 @@ public class MainViewModel : INotifyPropertyChanged
         Generators.Add(new MazeGenerator());
 
         Solvers.Add(new AStarSolver());
-        Solvers.Add(new BfsSolver());
-        Solvers.Add(new HandOnWallSolver { UseLeftHand = true });
-        Solvers.Add(new HandOnWallSolver { UseLeftHand = false });
+        //Solvers.Add(new BfsSolver());
+        //Solvers.Add(new HandOnWallSolver { UseLeftHand = true });
+        //Solvers.Add(new HandOnWallSolver { UseLeftHand = false });
 
         Duration = "0:0.0";
 
@@ -95,50 +83,17 @@ public class MainViewModel : INotifyPropertyChanged
         var generator = Generators[0];
         generator.Seed = parsedSeed;
         Board = generator.Generate(width, height);
+        Target = new Position(2, 2);
+        Start = new Position(5, 5);
+        if (Start is Position s && Target is Position t)
+        {
+            Solve = new Solve([Direction.Top, Direction.Top], s, t);
+            //Solve = new Solve([Direction.Right, Direction.Right], s, t);
+            Solve = new Solve([Direction.Bottom, Direction.Bottom], s, t);
+            //Solve = new Solve([Direction.Left, Direction.Left], s, t);
+        }
     }
 
-    ///// <summary>
-    ///// Draws the solved path of the maze onto the given DrawingContext.
-    ///// </summary>
-    ///// <param name="dc">The DrawingContext used to render the solved path.</param>
-    //public void DrawSolvedPath(DrawingContext dc)
-    //{
-    //    if (Board == null || SolvedPath == null) return;
-    //    var rectangleSize = CellSize * 0.4;
-
-    //    for (var i = 0; i < Board.Cells.GetLength(0); i++)
-    //    {
-    //        for (var j = 0; j < Board.Cells.GetLength(1); j++)
-    //        {
-    //            var cell = Board.Cells[i, j];
-
-    //            if (SolvedPath == null || !SolvedPath.Contains(cell) ||
-    //                cell is not { IsStart: false, IsTarget: false }) continue;
-
-    //            var pathX = cell.X * CellSize + OffsetX;
-    //            var pathY = cell.Y * CellSize + OffsetY;
-
-    //            var cellIndex = SolvedPath.IndexOf(cell);
-    //            var totalSteps = SolvedPath.Count;
-
-    //            var pathColor = Color.FromArgb(128,
-    //                (byte)(255 * cellIndex / (double)totalSteps),
-    //                0,
-    //                (byte)(255 * (1 - cellIndex / (double)totalSteps)));
-
-    //            dc.DrawRectangle(
-    //                new SolidColorBrush(pathColor),
-    //                new Pen(new SolidColorBrush(pathColor), 1),
-    //                new Rect(
-    //                    pathX + (CellSize - rectangleSize) / 2,
-    //                    pathY + (CellSize - rectangleSize) / 2,
-    //                    rectangleSize,
-    //                    rectangleSize
-    //                )
-    //            );
-    //        }
-    //    }
-    //}
 
     ///// <summary>
     ///// Draws the processed cells of the maze during the execution of the pathfinding algorithm.
@@ -181,124 +136,77 @@ public class MainViewModel : INotifyPropertyChanged
     //}
 
 
-    ///// <summary>
-    ///// Handles user actions on a selected cell in the board, allowing the user to set a start or target cell.
-    ///// </summary>
-    ///// <param name="position">The position of the mouse click on the canvas.</param>
-    //public void SelectActionOnCell(Point position)
-    //{
-    //    var relativeX = position.X - OffsetX;
-    //    var relativeY = position.Y - OffsetY;
+    /// <summary>
+    /// Handles user actions on a selected cell in the board, allowing the user to set a start or target cell.
+    /// </summary>
+    /// <param name="position">The position of the mouse click on the canvas.</param>
+    public void SelectActionOnCell(Position position)
+    {
+        var dialog = new CellActionDialog();
+        var result = dialog.ShowDialog() ?? false;
+        if (!result) return;
 
-    //    var row = (int)(relativeX / CellSize);
-    //    var column = (int)(relativeY / CellSize);
+        switch (dialog.SelectedAction)
+        {
+            case CellAction.Start:
+                if (Equals(Target, position))
+                {
+                    MessageBox.Show("Start and Target should not be the same cell!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                Start = position;
+                return;
 
-    //    if (Board == null || row < 0 || row >= Board.Cells.GetLength(0) || column < 0 ||
-    //        column >= Board.Cells.GetLength(1)) return;
+            case CellAction.Target:
+                if (Equals(Start, position))
+                {
+                    MessageBox.Show("Start and Target should not be the same cell!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                Target = position;
+                return;
 
-    //    var clickedCell = Board.Cells[row, column];
+            case CellAction.Cancel:
+            default: return;
+        }
+    }
 
-    //    var dialog = new CellActionDialog();
-    //    if (dialog.ShowDialog() != true) return;
-    //    switch (dialog.SelectedAction)
-    //    {
-    //        case "Start":
-    //            if (clickedCell.IsTarget)
-    //            {
-    //                MessageBox.Show("Cannot set start on target cell", "Error", MessageBoxButton.OK,
-    //                    MessageBoxImage.Error);
-    //                break;
-    //            }
+    /// <summary>
+    /// Starts the selected pathfinding algorithm (A*, HandOnWall or BFS) and calculates the solved path.
+    /// </summary>
+    /// <param name="index">The index of the algorithm to use (0 for A*, 1 for HandOnWall(left-handed), 2 for HandOnWall(right-handed) , 3 for Bfs).</param>
+    /// <param name="visualize">Specifies if the algorithm's steps should be visualized.</param>
+    public void SolveBoard(int index)
+    {
+        if (Board is not Board board)
+        {
+            MessageBox.Show("No Maze defined", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
 
-    //            foreach (var cell in Board.Cells)
-    //            {
-    //                cell.IsStart = false;
-    //            }
+        if (Solvers[index] is not IPathSolver solver)
+        {
+            MessageBox.Show("No valid algorithm", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
 
-    //            clickedCell.IsStart = true;
-    //            clickedCell.IsTarget = false;
-    //            break;
+        if (Start is not Position start)
+        {
+            MessageBox.Show("Start not set!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
 
-    //        case "Target":
-    //            if (clickedCell.IsStart)
-    //            {
-    //                MessageBox.Show("Cannot set target on start cell", "Error", MessageBoxButton.OK,
-    //                    MessageBoxImage.Error);
-    //                break;
-    //            }
+        if (Target is not Position target)
+        {
+            MessageBox.Show("Target not set!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
 
-    //            foreach (var cell in Board.Cells)
-    //            {
-    //                cell.IsTarget = false;
-    //            }
-
-    //            clickedCell.IsStart = false;
-    //            clickedCell.IsTarget = true;
-    //            break;
-
-    //        case "Cancel":
-    //            break;
-    //    }
-    //}
-
-    ///// <summary>
-    ///// Starts the selected pathfinding algorithm (A*, HandOnWall or BFS) and calculates the solved path.
-    ///// </summary>
-    ///// <param name="index">The index of the algorithm to use (0 for A*, 1 for HandOnWall(left-handed), 2 for HandOnWall(right-handed) , 3 for Bfs).</param>
-    ///// <param name="visualize">Specifies if the algorithm's steps should be visualized.</param>
-    //public async Task StartAlgorithm(int index, bool visualize, int visualizationSpeed)
-    //{
-    //    if (Board == null)
-    //    {
-    //        MessageBox.Show("No Maze defined", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-    //        return;
-    //    }
-
-    //    Solver = index switch
-    //    {
-    //        0 => _aStarSolver,
-    //        1 => new HandOnWallSolver { UseLeftHand = true },
-    //        2 => new HandOnWallSolver { UseLeftHand = false },
-    //        3 => _bfsSolver,
-    //        _ => null                     // Default
-    //    };
-
-    //    Solver.ProcessedCellsUpdated += OnProcessedCellsUpdated;
-
-    //    if (Solver == null)
-    //    {
-    //        MessageBox.Show("No valid algorithm", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-    //        return;
-    //    }
-
-    //    try
-    //    {
-    //        _isPathSolved = false;
-    //        _stopwatch.Restart();
-
-    //        UpdateDurationInBackground();
-
-    //        Solver.InitSolver(Board.Cells);
-
-    //        SolvedPath = (await Solver.StartSolver(visualize, visualizationSpeed)).ToList();
-
-    //        if (SolvedPath == null)
-    //        {
-    //            MessageBox.Show("Unable to find Path", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-    //        }
-    //        else _isPathSolved = true;
-
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-    //    }
-    //    finally
-    //    {
-    //        _stopwatch.Stop();
-    //        Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
-    //    }
-    //}
+        _stopwatch.Restart();
+        Solve = solver.Solve(board, start, target);
+        _stopwatch.Stop();
+        Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
+    }
 
     ///// <summary>
     ///// Resets the solved path and duration, clearing any previously calculated paths.
