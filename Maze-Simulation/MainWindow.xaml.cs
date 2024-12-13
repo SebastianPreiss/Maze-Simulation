@@ -14,11 +14,10 @@ using System.Windows.Threading;
 /// </summary>
 public partial class MainWindow : Window
 {
-    // Drawing properties
-    private const double MinPadding = 0.9;
-
     private readonly DispatcherTimer _resizeTimer;
     private readonly MainViewModel _viewModel;
+    private static DrawSettings _settings = default!;
+    private Image _maze;
 
     public MainWindow()
     {
@@ -34,19 +33,21 @@ public partial class MainWindow : Window
         };
 
         _viewModel = new MainViewModel();
+        _viewModel.Timer.Tick += (s, e) => Draw();
+        _viewModel.OnBoardChanged += UpdateSettings;
+        _viewModel.OnBoardChanged += DrawBoard;
         DataContext = _viewModel;
-
-        //_viewModel.PropertyChanged += (sender, args) =>
-        //{
-        //    if (args.PropertyName == nameof(_viewModel.ProcessedCells))
-        //    {
-        //        Draw();
-        //    }
-        //};
-
+        //_viewModel.GenerateBoard("42", 32, 32, true);
     }
 
-    // TODO: Fix performance issues for large mazes
+    private void UpdateSettings(Board board)
+    {
+        var spacing = Spacing.GetDrawingSpacing(board, DrawingCanvas);
+        var pens = new Pens(new Pen(Brushes.Black, 3));
+        var highlights = new Highlights(new Highlight(Brushes.Blue, spacing.SolveSize), new Highlight(Brushes.Red, spacing.SolveSize));
+        _settings = new DrawSettings(spacing, pens, highlights);
+    }
+
     /// <summary>
     /// Draws the maze on the canvas based on the current state of the view model.
     /// Clears previous drawings and calculates cell sizes and offsets.
@@ -56,27 +57,33 @@ public partial class MainWindow : Window
         if (_viewModel.Board is not Board board) return;
 
         DrawingCanvas.Children.Clear();
-        var spacing = GetDrawingSpacing(board, DrawingCanvas);
-        var pens = new Pens(new Pen(Brushes.Black, 3));
-        var highlights = new Highlights(new Highlight(Brushes.Blue, spacing.SolveSize), new Highlight(Brushes.Red, spacing.SolveSize));
-        var settings = new DrawSettings(spacing, pens, highlights);
 
         var drawingVisualisation = new DrawingVisual();
         using (var dc = drawingVisualisation.RenderOpen())
         {
-            DrawBoard(board, dc, settings);
             if (_viewModel.Solve is Solve solve)
             {
-                DrawSolve(board, solve, dc, settings);
+                DrawSolve(board, solve, dc);
             }
             if (_viewModel.Start is Position start)
             {
-                DrawHighlight(board, start, dc, settings.Highlights.Start, settings.Spacing);
+                DrawHighlight(board, start, dc, _settings.Highlights.Start);
             }
             if (_viewModel.Target is Position target)
             {
-                DrawHighlight(board, target, dc, settings.Highlights.Target, settings.Spacing);
+                DrawHighlight(board, target, dc, _settings.Highlights.Target);
             }
+
+            // Do stuff for fix padding ^^
+            var offset = GetOffset(board, new Position(0, 0), _settings.Spacing);
+
+            var (s, end) = GetLine(Direction.Bottom, _settings.Spacing.CellSize);
+            dc.DrawLine(_settings.Pens.Wall, Point.Add(s, offset), Point.Add(end, offset));
+
+            offset = GetOffset(board, new Position(board.Width - 1, board.Height - 1), _settings.Spacing);
+
+            (s, end) = GetLine(Direction.Top, _settings.Spacing.CellSize);
+            dc.DrawLine(_settings.Pens.Wall, Point.Add(s, offset), Point.Add(end, offset));
         }
 
         var drawingImage = new DrawingImage(drawingVisualisation.Drawing);
@@ -84,29 +91,48 @@ public partial class MainWindow : Window
         var image = new Image
         {
             Source = drawingImage,
-            Width = board.Width * settings.Spacing.CellSize.Width,
-            Height = board.Height * settings.Spacing.CellSize.Height
+            Width = board.Width * _settings.Spacing.CellSize.Width,
+            Height = board.Height * _settings.Spacing.CellSize.Height
         };
 
-        Canvas.SetLeft(image, spacing.Offset.Width);
-        Canvas.SetTop(image, spacing.Offset.Height);
-
+        Canvas.SetLeft(image, _settings.Spacing.Offset.Width);
+        Canvas.SetTop(image, _settings.Spacing.Offset.Height);
         DrawingCanvas.Children.Add(image);
+
+        Canvas.SetLeft(_maze, _settings.Spacing.Offset.Width);
+        Canvas.SetTop(_maze, _settings.Spacing.Offset.Height);
+        DrawingCanvas.Children.Add(_maze);
     }
 
-    private static void DrawHighlight(Board board, Position position, DrawingContext dc, Highlight settings, Spacing spacing)
+    private void DrawBoard(Board board)
     {
-        var offset = GetOffset(board, position, spacing);
-        var halfCellSize = new Point(spacing.CellSize.Width / 2, spacing.CellSize.Height / 2);
-        var center = Point.Add(halfCellSize, offset);
+        var drawingVisualisation = new DrawingVisual();
+        using (var dc = drawingVisualisation.RenderOpen())
+        {
+            DrawBoard(board, dc);
+        }
 
+        var drawingImage = new DrawingImage(drawingVisualisation.Drawing);
+
+        _maze = new Image
+        {
+            Source = drawingImage,
+            Width = board.Width * _settings.Spacing.CellSize.Width,
+            Height = board.Height * _settings.Spacing.CellSize.Height
+        };
+        Draw();
+    }
+
+    private static void DrawHighlight(Board board, Position position, DrawingContext dc, Highlight settings)
+    {
+        var center = GetDrawPoint(board, position, new(0, 0));
         dc.DrawEllipse(settings.Fill, null, center, settings.Size.Width, settings.Size.Height);
     }
 
     /// <summary>
     /// Draws the basic structure of the board on the given canvas using the specified DrawingContext.
     /// </summary>
-    private static void DrawBoard(Board board, DrawingContext dc, DrawSettings settings)
+    private static void DrawBoard(Board board, DrawingContext dc)
     {
         Direction[] directions = [Direction.Top, Direction.Right, Direction.Bottom, Direction.Left];
         for (var i = 0; i < board.Width; i++)
@@ -116,13 +142,13 @@ public partial class MainWindow : Window
                 var position = new Position(i, j);
                 var current = board[position];
 
-                var offset = GetOffset(board, position, settings.Spacing);
+                var offset = GetOffset(board, position, _settings.Spacing);
 
                 foreach (var direction in directions)
                 {
                     if (!current[direction]) continue;
-                    var (start, end) = GetLine(direction, settings.Spacing.CellSize);
-                    dc.DrawLine(settings.Pens.Wall, Point.Add(start, offset), Point.Add(end, offset));
+                    var (start, end) = GetLine(direction, _settings.Spacing.CellSize);
+                    dc.DrawLine(_settings.Pens.Wall, Point.Add(start, offset), Point.Add(end, offset));
                 }
             }
         }
@@ -131,11 +157,49 @@ public partial class MainWindow : Window
     /// <summary>
     /// Draws the solved path of the maze onto the given DrawingContext.
     /// </summary>
-    private static void DrawSolve(Board board, Solve solve, DrawingContext dc, DrawSettings settings)
+    private void DrawSolve(Board board, Solve solve, DrawingContext dc)
+    {
+        if (_viewModel.IsRunning && (VisuSolver.IsChecked ?? false))
+        {
+            DrawSolveProcess(board, solve, dc);
+        }
+        else
+        {
+            DrawSolvePath(board, solve, dc);
+        }
+    }
+
+    private void DrawSolveProcess(Board board, Solve solve, DrawingContext dc)
+    {
+        var cells = solve.ProcessingOrder;
+        var values = solve.CellValue;
+        var maxCost = values.Values.Max();
+        var minCost = values.Values.Min();
+
+        foreach (var cell in cells.Take(_viewModel.ToVisualize))
+        {
+            var point = GetDrawPoint(board, cell, _settings.Spacing.ProcessingSize);
+
+            var normalizedValue = (solve.CellValue[cell] - minCost) / (maxCost - minCost);
+
+            var color = Color.FromArgb(50,
+                (byte)(255 * normalizedValue),
+                (byte)(255 * (1 - normalizedValue)),
+                0);
+
+            dc.DrawRectangle(
+                null,
+                new Pen(new SolidColorBrush(color), 6),
+                new Rect(point, _settings.Spacing.ProcessingSize)
+            );
+        }
+    }
+
+    private static void DrawSolvePath(Board board, Solve solve, DrawingContext dc)
     {
         var current = board[solve.Start];
         var target = board[solve.Target];
-        var counter = 0;
+        var counter = 1;
         var total = solve.Steps.Count;
 
         foreach (var step in solve.Steps)
@@ -144,26 +208,41 @@ public partial class MainWindow : Window
             var position = BoardUtils.GetNewPosition(current, step);
 
             // draw current
-            var offset = GetOffset(board, position, settings.Spacing);
-            var cellSize = new Point(settings.Spacing.CellSize.Width / 2 - settings.Spacing.SolveSize.Width / 2, settings.Spacing.CellSize.Height / 2 - settings.Spacing.SolveSize.Height / 2);
-            var point = Point.Add(cellSize, offset);
+            var point = GetDrawPoint(board, position, _settings.Spacing.SolveSize);
 
+            var doneness = (double)counter / total;
             var pathColor = Color.FromArgb(128,
-                (byte)(255 * counter / total),
+                (byte)MathUtils.Range(doneness, 0, 255),
                 0,
-                (byte)(255 * (1 - counter / total)));
+                (byte)MathUtils.Range(doneness, 255, 0));
 
             dc.DrawRectangle(
                 new SolidColorBrush(pathColor),
                 null,
-                new Rect(point, settings.Spacing.SolveSize)
+                new Rect(point, _settings.Spacing.SolveSize)
             );
 
             // step to next and set as current
             var next = board[position];
-            if (Equals(next, target)) return;
+            if (Equals(next, target)) break;
             current = next;
         }
+    }
+
+    private static Point GetDrawPoint(Board board, Cell cell, Size? size = default)
+    {
+        return GetDrawPoint(board, new Position(cell.X, cell.Y), size);
+    }
+
+    private static Point GetDrawPoint(Board board, Position position, Size? size = default)
+    {
+        var offset = GetOffset(board, position, _settings.Spacing);
+        var cellSize = new Point(0, 0);
+        if (size is Size s)
+        {
+            cellSize = new Point((_settings.Spacing.CellSize.Width - s.Width) / 2d, (_settings.Spacing.CellSize.Height - s.Height) / 2d);
+        }
+        return Point.Add(cellSize, offset);
     }
 
     private static Vector GetOffset(Board board, Position position, Spacing spacing)
@@ -206,10 +285,8 @@ public partial class MainWindow : Window
     {
         if (_viewModel.Board is not Board board) return;
 
-        DrawingCanvas.Children.Clear();
-        var spacing = GetDrawingSpacing(board, DrawingCanvas);
+        var spacing = Spacing.GetDrawingSpacing(board, DrawingCanvas);
 
-        if (e.LeftButton != MouseButtonState.Pressed) return;
         var point = e.GetPosition(DrawingCanvas);
 
         var boardHeight = board.Height * spacing.CellSize.Height;
@@ -224,8 +301,8 @@ public partial class MainWindow : Window
         y = Math.Min(Math.Max(0, y), board.Height - 1);
 
         var position = new Position(x, y);
-        // position
-        _viewModel.SelectActionOnCell(position);
+
+        _viewModel.SelectActionOnCell(position, e);
         Draw();
     }
 
@@ -241,37 +318,6 @@ public partial class MainWindow : Window
         Draw();
     }
 
-    private record DrawSettings(Spacing Spacing, Pens Pens, Highlights Highlights);
-    private record Pens(Pen Wall);
-    private record Highlight(Brush Fill, Size Size);
-    private record Highlights(Highlight Start, Highlight Target);
-    private record Spacing(Size CellSize, Size Offset, Size SolveSize);
-
-    private static Spacing GetDrawingSpacing(Board board, FrameworkElement element)
-    {
-        var width = element.ActualWidth;
-        var height = element.ActualHeight;
-
-        var cellWidth = (width * MinPadding) / board.Width;
-        var cellHeight = (height * MinPadding) / board.Height;
-
-        // ensure square shape of cell
-        var cell = cellHeight < cellWidth ? cellHeight : cellWidth;
-        var cellSize = new Size(cell, cell);
-
-        var solveSize = new Size(cell * 0.4, cell * 0.4);
-
-        var boardWidth = board.Width * cellSize.Width;
-        var boardHeight = board.Height * cellSize.Height;
-
-        var offsetX = (width - boardWidth) / 2;
-        var offsetY = (height - boardHeight) / 2;
-        var offset = new Size(offsetX, offsetY);
-
-
-        return new Spacing(cellSize, offset, solveSize);
-    }
-
     private static (Point x, Point y) GetLine(Direction wall, Size cellSize)
     {
         return wall switch
@@ -282,5 +328,13 @@ public partial class MainWindow : Window
             Direction.Left => (new Point(0, 0), new Point(0, cellSize.Height)),
             _ => throw new ArgumentException($"Invalid wall \"{wall}\"")
         };
+    }
+
+    private void VisuSpeedSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_viewModel?.Timer is DispatcherTimer timer)
+        {
+            timer.Interval = TimeSpan.FromMilliseconds(VisuSpeedSlider.Value);
+        }
     }
 }

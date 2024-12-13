@@ -7,6 +7,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Threading;
 
 /// <summary>
 /// Represents the main view model for managing the maze generation, pathfinding, 
@@ -14,7 +16,9 @@ using System.Windows;
 /// </summary>
 public class MainViewModel : INotifyPropertyChanged
 {
-    //Maze properties
+    public const int DEFAULT_SPEED_MS = 100;
+
+    // Maze properties
     public Board? Board { get; private set; }
     public Position? Start { get; private set; }
     public Position? Target { get; private set; }
@@ -23,11 +27,19 @@ public class MainViewModel : INotifyPropertyChanged
     public List<IBoardStrategy> Generators { get; } = [];
     public List<IPathSolver> Solvers { get; } = [];
 
-    //UI properties
+    public DispatcherTimer Timer { get; private set; }
+    public int ToVisualize { get; private set; } = 0;
+    public bool IsRunning => ToVisualize < Solve?.CellValue.Count;
+
+    public delegate void BoardEvent(Board board);
+    public event BoardEvent OnBoardChanged;
+
+    // UI properties
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    // Visualizing the duration of a solver
     private readonly Stopwatch _stopwatch;
     private string _duration;
-
     public string Duration
     {
         get => _duration;
@@ -51,21 +63,15 @@ public class MainViewModel : INotifyPropertyChanged
 
         Duration = "0:0.0";
 
-        // For debugging
-        //Board = new Board(2, 2);
-        //Board.FillBlank();
-
-        //Board[0, 0][Direction.Right] = false;
-        //Board[1, 0][Direction.Left] = false;
-
-        //Board[1, 1][Direction.Bottom] = false;
-        //Board[1, 0][Direction.Top] = false;
-
-        //Board[1, 1][Direction.Left] = false;
-        //Board[0, 1][Direction.Right] = false;
-
-        //Board[0, 0][Direction.Top] = false;
-        //Board[0, 1][Direction.Bottom] = false;
+        Timer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(DEFAULT_SPEED_MS)
+        };
+        Timer.Tick += (s, e) =>
+        {
+            ToVisualize++;
+            if (!IsRunning) Timer.Stop();
+        };
     }
 
     /// <summary>
@@ -83,72 +89,21 @@ public class MainViewModel : INotifyPropertyChanged
         var generator = Generators[0];
         generator.Seed = parsedSeed;
         Board = generator.Generate(width, height);
+        OnBoardChanged.Invoke(Board);
         Target = new Position(2, 2);
-        Start = new Position(5, 5);
-        if (Start is Position s && Target is Position t)
-        {
-            Solve = new Solve([Direction.Top, Direction.Top], s, t);
-            //Solve = new Solve([Direction.Right, Direction.Right], s, t);
-            Solve = new Solve([Direction.Bottom, Direction.Bottom], s, t);
-            //Solve = new Solve([Direction.Left, Direction.Left], s, t);
-        }
+        Start = new Position(width - 2, height - 2);
+        SolveBoard(0);
     }
-
-
-    ///// <summary>
-    ///// Draws the processed cells of the maze during the execution of the pathfinding algorithm.
-    ///// </summary>
-    ///// <param name="dc">The DrawingContext used for rendering the processed cells.</param>
-    ///// <param name="processedCells">
-    ///// A collection of tuples containing the processed cells and their associated cost values.
-    ///// </param>
-    //public void DrawProcessedCells(DrawingContext dc, IEnumerable<(Cell Cell, double Cost)> processedCells)
-    //{
-    //    if (_isPathSolved) return;
-    //    var maxCost = processedCells.Max(c => c.Cost);
-    //    var minCost = processedCells.Min(c => c.Cost);
-    //    var rectangleSize = CellSize * 0.4;
-
-    //    foreach (var (cell, cost) in processedCells)
-    //    {
-    //        var normalizedCost = (cost - minCost) / (maxCost - minCost);
-    //        var color = Color.FromArgb(
-    //            128,
-    //            (byte)(255 * normalizedCost),
-    //            (byte)(255 * (1 - normalizedCost)),
-    //            0
-    //        );
-
-    //        var pathX = cell.X * CellSize + OffsetX;
-    //        var pathY = cell.Y * CellSize + OffsetY;
-
-    //        dc.DrawRectangle(
-    //            new SolidColorBrush(color),
-    //            new Pen(new SolidColorBrush(color), 1),
-    //            new Rect(
-    //                pathX + (CellSize - rectangleSize) / 2,
-    //                pathY + (CellSize - rectangleSize) / 2,
-    //                rectangleSize,
-    //                rectangleSize
-    //            )
-    //        );
-    //    }
-    //}
-
 
     /// <summary>
     /// Handles user actions on a selected cell in the board, allowing the user to set a start or target cell.
     /// </summary>
     /// <param name="position">The position of the mouse click on the canvas.</param>
-    public void SelectActionOnCell(Position position)
+    public void SelectActionOnCell(Position position, MouseButtonEventArgs mouseButton)
     {
-        var dialog = new CellActionDialog();
-        var result = dialog.ShowDialog() ?? false;
-        if (!result) return;
-
-        switch (dialog.SelectedAction)
+        switch (mouseButton.ChangedButton)
         {
-            case CellAction.Start:
+            case MouseButton.Left:
                 if (Equals(Target, position))
                 {
                     MessageBox.Show("Start and Target should not be the same cell!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -157,7 +112,7 @@ public class MainViewModel : INotifyPropertyChanged
                 Start = position;
                 return;
 
-            case CellAction.Target:
+            case MouseButton.Right:
                 if (Equals(Start, position))
                 {
                     MessageBox.Show("Start and Target should not be the same cell!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -166,7 +121,6 @@ public class MainViewModel : INotifyPropertyChanged
                 Target = position;
                 return;
 
-            case CellAction.Cancel:
             default: return;
         }
     }
@@ -205,36 +159,15 @@ public class MainViewModel : INotifyPropertyChanged
         _stopwatch.Restart();
         Solve = solver.Solve(board, start, target);
         _stopwatch.Stop();
+        StartVisualisation();
         Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
     }
 
-    ///// <summary>
-    ///// Resets the solved path and duration, clearing any previously calculated paths.
-    ///// </summary>
-    //public void ResetSolvedPath()
-    //{
-    //    if (Board == null) return;
-    //    SolvedPath?.Clear();
-    //    _stopwatch.Reset();
-    //}
-
-    //private void OnProcessedCellsUpdated(IEnumerable<(Cell Cell, double Cost)> processedCells)
-    //{
-    //    ProcessedCells = processedCells.ToList();
-    //    OnPropertyChanged(nameof(ProcessedCells));
-    //}
-
-    //private async Task UpdateDurationInBackground()
-    //{
-    //    while (_stopwatch.IsRunning)
-    //    {
-    //        Application.Current.Dispatcher.Invoke(() =>
-    //        {
-    //            Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
-    //        });
-    //        await Task.Delay(50);
-    //    }
-    //}
+    private void StartVisualisation()
+    {
+        Timer.Start();
+        ToVisualize = 0;
+    }
 
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {

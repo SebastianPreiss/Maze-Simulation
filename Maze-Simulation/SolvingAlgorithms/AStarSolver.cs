@@ -10,27 +10,8 @@ public class AStarSolver : IPathSolver
 {
     private Dictionary<Cell, double> _gScore = [];
     private Dictionary<Cell, double> _fScore = [];
-
-    public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
-
-    private readonly List<(Cell Cell, double Cost)> _processedCells = [];
-    //public IEnumerable<(Cell Cell, double Cost)> ProcessedCells => _processedCells;
-    //private Cell[,]? _cells;
-    //private Cell? _start;
-    //private Cell? _target;
-
-    ///// <summary>
-    ///// Initializes the solver with the maze cells.
-    ///// </summary>
-    ///// <param name="cells">Cells of the maze.</param>
-    //public void InitSolver(Cell[,] cells)
-    //{
-    //    _cells = cells;
-    //    //_start = _cells.Cast<Cell>().First(c => c.IsStart);
-    //    //_target = _cells.Cast<Cell>().First(c => c.IsTarget);
-    //    _start = _cells[0, 0];
-    //    _target = _cells[cells.GetLength(0) - 1, cells.GetLength(1) - 1];
-    //}
+    private Queue<Cell> _processedCells = [];
+    private Dictionary<Cell, double> _score = [];
 
     /// <summary>
     /// Starts the A* pathfinding algorithm to find the shortest path from the start cell to the target cell.
@@ -55,24 +36,22 @@ public class AStarSolver : IPathSolver
         _fScore = board.ToDictionary(c => c, c => double.MaxValue);
         _fScore[startCell] = Heuristic(startCell, targetCell);
 
+        _processedCells = [];
+        _score = [];
+
         while (openSet.Any())
         {
             // Select the cell with the lowest fScore (best estimated total cost)
             var current = openSet.OrderBy(c => _fScore[c]).First();
 
-            //// Visualization: process and display the current cell
-            //if (visualize)
-            //{
-            //    _processedCells.Add((current, gScore[current]));
-            //    ProcessedCellsUpdated?.Invoke(_processedCells);
-            //    await Task.Delay(visualizationSpeed);
-            //}
+            // Add the current cell to the processed cells
+            _processedCells.Enqueue(current);
+            _score[current] = _gScore[current];
 
             if (current == targetCell)
             {
-                _processedCells.Clear();
-                var path = ReconstructPath(cameFrom);
-                return new Solve(path.ToList(), start, target);
+                var path = ReconstructPath(cameFrom, current).ToList();
+                return new Solve(path, start, target, _processedCells, _score);
             }
 
             openSet.Remove(current);
@@ -101,11 +80,22 @@ public class AStarSolver : IPathSolver
         return null;
     }
 
-    private static IEnumerable<Direction> ReconstructPath(IReadOnlyDictionary<Cell, Cell> cameFrom)
+    private static IEnumerable<Direction> ReconstructPath(IReadOnlyDictionary<Cell, Cell> moves, Cell target)
     {
-        foreach (var (start, end) in cameFrom)
+        foreach (var (current, next) in ReconstructFromTarget(moves, target).Reverse())
         {
-            yield return GetDirection(start, end);
+            yield return GetDirection(current, next);
+        }
+    }
+
+    private static IEnumerable<(Cell previous, Cell current)> ReconstructFromTarget(IReadOnlyDictionary<Cell, Cell> moves, Cell target)
+    {
+        var current = target;
+        while (moves.ContainsKey(current))
+        {
+            var previous = moves[current];
+            yield return (previous, current);
+            current = previous;
         }
     }
 
