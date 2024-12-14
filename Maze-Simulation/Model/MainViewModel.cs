@@ -88,11 +88,11 @@ public class MainViewModel : INotifyPropertyChanged
         // Select the first generator in the list 
         var generator = Generators[0];
         generator.Seed = parsedSeed;
-        Board = generator.Generate(width, height);
+        Board = generator.Generate(width, height, multiPath);
+        StopVisualisation();
         OnBoardChanged.Invoke(Board);
         Target = new Position(2, 2);
         Start = new Position(width - 2, height - 2);
-        SolveBoard(0);
     }
 
     /// <summary>
@@ -138,12 +138,6 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (Solvers[index] is not IPathSolver solver)
-        {
-            MessageBox.Show("No valid algorithm", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            return;
-        }
-
         if (Start is not Position start)
         {
             MessageBox.Show("Start not set!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -153,6 +147,12 @@ public class MainViewModel : INotifyPropertyChanged
         if (Target is not Position target)
         {
             MessageBox.Show("Target not set!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        if (Solvers[index] is not IPathSolver solver)
+        {
+            MessageBox.Show("No valid algorithm", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
 
@@ -166,6 +166,12 @@ public class MainViewModel : INotifyPropertyChanged
     private void StartVisualisation()
     {
         Timer.Start();
+        ToVisualize = 0;
+    }
+
+    private void StopVisualisation()
+    {
+        Timer.Stop();
         ToVisualize = 0;
     }
 
