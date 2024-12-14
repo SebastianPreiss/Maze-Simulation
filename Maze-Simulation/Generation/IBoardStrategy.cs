@@ -13,5 +13,5 @@ public interface IBoardStrategy
     /// <summary>
     /// Generates the board based on the implemented algorithm.
     /// </summary>
-    Board Generate(int width, int height);
+    Board Generate(int width, int height, bool multiPath);
 }

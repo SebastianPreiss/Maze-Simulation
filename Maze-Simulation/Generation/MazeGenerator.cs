@@ -14,7 +14,6 @@ using System.Diagnostics.CodeAnalysis;
 /// </remarks>
 public class MazeGenerator : IBoardStrategy
 {
-    private readonly bool _multiPath;
     private readonly Stack<Cell> _track = new();
     private readonly Dictionary<Cell, bool> _visited = [];
     private readonly Dictionary<Cell, bool> _collapsed = [];
@@ -28,15 +27,8 @@ public class MazeGenerator : IBoardStrategy
     /// Initializes a new instance of the <see cref="MazeGenerator"/> class.
     /// This class uses a depth-first search algorithm to generate a maze and optionally adds multiple paths.
     /// </summary>
-    /// <param name="seed">The seed for the random number generator, ensuring reproducibility of the maze structure. Default is 42.</param>
-    /// <param name="multiPath">
-    /// A boolean indicating whether to create multiple paths in the maze. 
-    /// If set to <c>true</c>, additional random connections between cells will be created.
-    /// Default is <c>false</c>.
-    /// </param>
-    public MazeGenerator(bool multiPath = false)
+    public MazeGenerator()
     {
-        _multiPath = multiPath;
     }
 
     /// <summary>
@@ -44,7 +36,7 @@ public class MazeGenerator : IBoardStrategy
     /// It modifies the walls of the cells to create paths, based on the random moves chosen from the available options.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if an invalid direction is encountered during generation.</exception>
-    public Board Generate(int width, int height)
+    public Board Generate(int width, int height, bool multiPath = false)
     {
         _board = new Board(width, height);
 
@@ -65,7 +57,7 @@ public class MazeGenerator : IBoardStrategy
             _track.Push(next);
             ConnectCells(current, next, move);
         }
-        if (_multiPath) AddRandomConnections();
+        if (multiPath) AddRandomConnections();
         return _board;
     }
 
@@ -74,10 +66,10 @@ public class MazeGenerator : IBoardStrategy
     /// </summary>
     private void AddRandomConnections()
     {
-        const int MagicNumber = 5;
+        const int magicNumber = 5;
 
         var numberOfCells = _board.Width * _board.Height;
-        var numberOfConnections = numberOfCells / MagicNumber;
+        var numberOfConnections = numberOfCells / magicNumber;
         Direction[] directions = [Direction.Top, Direction.Right, Direction.Bottom, Direction.Left];
 
         for (var i = 0; i < numberOfConnections; i++)
