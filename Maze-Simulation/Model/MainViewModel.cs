@@ -1,6 +1,7 @@
 ﻿namespace Maze_Simulation.Model;
 
 using Generation;
+using Maze_Simulation.Shared;
 using Shared;
 using SolvingAlgorithms;
 using System.ComponentModel;
@@ -50,6 +51,10 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Initializes the MainViewModel, setting up the maze generation and solving algorithms,
+    /// as well as the default timer settings for visualizing the solution process.
+    /// </summary>
     public MainViewModel()
     {
         _stopwatch = new Stopwatch();
@@ -76,11 +81,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// Generates a new maze board with the specified dimensions and seed value.
+    /// The default start and target positions are initialized after the board generation.
     /// </summary>
     /// <param name="seed">The seed used for random generation of the board.</param>
-    /// <param name="width">The width of the board.</param>
-    /// <param name="height">The height of the board.</param>
-    /// <param name="multiPath">Specifies if multiple paths should be created.</param>
+    /// <param name="width">The width of the maze board.</param>
+    /// <param name="height">The height of the maze board.</param>
+    /// <param name="multiPath">Indicates whether multiple paths should be generated.</param>
     public void GenerateBoard(string seed, int width, int height, bool multiPath)
     {
         if (!int.TryParse(seed, out var parsedSeed)) throw new ArgumentException("The provided seed value is not a valid integer.", nameof(seed));
@@ -96,9 +102,12 @@ public class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Handles user actions on a selected cell in the board, allowing the user to set a start or target cell.
+    /// Handles user interactions with the maze board to set the start and target cells.
+    /// Left-clicking on a cell sets the start position, while right-clicking sets the target position.
+    /// If the start and target are the same cell, an error message is displayed.
     /// </summary>
-    /// <param name="position">The position of the mouse click on the canvas.</param>
+    /// <param name="position">The position of the cell the user clicked on the board.</param>
+    /// <param name="mouseButton">The mouse button that triggered the event (left or right).</param>
     public void SelectActionOnCell(Position position, MouseButtonEventArgs mouseButton)
     {
         switch (mouseButton.ChangedButton)
@@ -126,10 +135,10 @@ public class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Starts the selected pathfinding algorithm (A*, HandOnWall or BFS) and calculates the solved path.
+    /// Starts the selected pathfinding algorithm and solves the maze.
+    /// The algorithm to be used is selected by the given index.
     /// </summary>
     /// <param name="index">The index of the algorithm to use (0 for A*, 1 for HandOnWall(left-handed), 2 for HandOnWall(right-handed) , 3 for Bfs).</param>
-    /// <param name="visualize">Specifies if the algorithm's steps should be visualized.</param>
     public void SolveBoard(int index)
     {
         if (Board is not Board board)

@@ -7,6 +7,11 @@ public class Cell(int x, int y)
 {
     private readonly bool[] _walls = [true, true, true, true];
 
+    /// <summary>
+    /// Gets or sets the state of the wall in the specified direction.
+    /// </summary>
+    /// <param name="wall">The direction of the wall (Top, Right, Bottom, Left).</param>
+    /// <returns>The state of the wall in the specified direction.</returns>
     public bool this[Direction wall]
     {
         get => _walls[GetIndex(wall)];

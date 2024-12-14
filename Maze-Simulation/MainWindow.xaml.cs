@@ -2,7 +2,6 @@
 
 using Model;
 using Shared;
-using SolvingAlgorithms;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -40,6 +39,10 @@ public partial class MainWindow : Window
         //_viewModel.GenerateBoard("42", 32, 32, true);
     }
 
+    /// <summary>
+    /// Updates the drawing settings based on the given board.
+    /// This includes setting spacing, pens, and highlights for drawing.
+    /// </summary>
     private void UpdateSettings(Board board)
     {
         var spacing = Spacing.GetDrawingSpacing(board, DrawingCanvas);
@@ -109,6 +112,9 @@ public partial class MainWindow : Window
         DrawingCanvas.Children.Add(_maze);
     }
 
+    /// <summary>
+    /// Draws the board on the canvas. This method will be triggered when the board is updated.
+    /// </summary>
     private void DrawBoard(Board board)
     {
         var drawingVisualisation = new DrawingVisual();
@@ -128,6 +134,9 @@ public partial class MainWindow : Window
         Draw();
     }
 
+    /// <summary>
+    /// Draws the highlighted position (Start or Target) on the canvas.
+    /// </summary>
     private static void DrawHighlight(Board board, Position position, DrawingContext dc, Highlight settings)
     {
         var center = GetDrawPoint(board, position, new(0, 0));
@@ -174,6 +183,9 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Visualizes the solving process step by step.
+    /// </summary>
     private void DrawSolveProcess(Board board, Solve solve, DrawingContext dc)
     {
         var cells = solve.ProcessingOrder;
@@ -200,6 +212,9 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Draws the final solved path after the algorithm has completed.
+    /// </summary>
     private static void DrawSolvePath(Board board, Solve solve, DrawingContext dc)
     {
         var current = board[solve.Start];
@@ -234,11 +249,17 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Returns the drawing point for the specified board cell and its offset.
+    /// </summary>
     private static Point GetDrawPoint(Board board, Cell cell, Size? size = default)
     {
         return GetDrawPoint(board, new Position(cell.X, cell.Y), size);
     }
 
+    /// <summary>
+    /// Returns the drawing point for the specified position in the board and its offset.
+    /// </summary>
     private static Point GetDrawPoint(Board board, Position position, Size? size = default)
     {
         var offset = GetOffset(board, position, _settings.Spacing);

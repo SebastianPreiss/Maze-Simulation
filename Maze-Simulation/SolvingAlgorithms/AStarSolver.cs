@@ -16,7 +16,10 @@ public class AStarSolver : IPathSolver
     /// <summary>
     /// Starts the A* pathfinding algorithm to find the shortest path from the start cell to the target cell.
     /// </summary>
-    /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
+    /// <param name="board">The board containing the maze.</param>
+    /// <param name="start">The starting position in the maze.</param>
+    /// <param name="target">The target position in the maze.</param>
+    /// <returns>A <see cref="Shared.Solve"/> object containing the solved path, or null if no path can be found.</returns>
     public Solve? Solve(Board board, Position start, Position target)
     {
         var startCell = board[start];
@@ -80,6 +83,14 @@ public class AStarSolver : IPathSolver
         return null;
     }
 
+    /// <summary>
+    /// Reconstructs the path from the start cell to the target cell by following the cell references 
+    /// stored in the <paramref name="moves"/> dictionary. The reconstructed path is returned as a 
+    /// sequence of directions to traverse the maze from start to target.
+    /// </summary>
+    /// <param name="moves">A dictionary that maps each visited cell to its predecessor cell in the path.</param>
+    /// <param name="target">The target cell in the maze, from which the path will be reconstructed.</param>
+    /// <returns>A sequence of directions to move from the start cell to the target cell, or an empty sequence if no path is found.</returns>
     private static IEnumerable<Direction> ReconstructPath(IReadOnlyDictionary<Cell, Cell> moves, Cell target)
     {
         foreach (var (current, next) in ReconstructFromTarget(moves, target).Reverse())
@@ -88,6 +99,12 @@ public class AStarSolver : IPathSolver
         }
     }
 
+    /// <summary>
+    /// Reconstructs the path from the target cell to the start cell by following the "cameFrom" chain.
+    /// </summary>
+    /// <param name="moves">A dictionary tracking the most efficient previous cell for each visited cell.</param>
+    /// <param name="target">The target cell from which the path will be reconstructed.</param>
+    /// <returns>A sequence of cell pairs representing the path from the target to the start.</returns>
     private static IEnumerable<(Cell previous, Cell current)> ReconstructFromTarget(IReadOnlyDictionary<Cell, Cell> moves, Cell target)
     {
         var current = target;
