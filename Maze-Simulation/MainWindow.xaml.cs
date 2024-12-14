@@ -75,15 +75,20 @@ public partial class MainWindow : Window
             }
 
             // Do stuff for fix padding ^^
+            var pen = new Pen(Brushes.Transparent, 3);
             var offset = GetOffset(board, new Position(0, 0), _settings.Spacing);
 
             var (s, end) = GetLine(Direction.Bottom, _settings.Spacing.CellSize);
-            dc.DrawLine(_settings.Pens.Wall, Point.Add(s, offset), Point.Add(end, offset));
+            dc.DrawLine(pen, Point.Add(s, offset), Point.Add(end, offset));
+            (s, end) = GetLine(Direction.Left, _settings.Spacing.CellSize);
+            dc.DrawLine(pen, Point.Add(s, offset), Point.Add(end, offset));
 
             offset = GetOffset(board, new Position(board.Width - 1, board.Height - 1), _settings.Spacing);
 
             (s, end) = GetLine(Direction.Top, _settings.Spacing.CellSize);
-            dc.DrawLine(_settings.Pens.Wall, Point.Add(s, offset), Point.Add(end, offset));
+            dc.DrawLine(pen, Point.Add(s, offset), Point.Add(end, offset));
+            (s, end) = GetLine(Direction.Right, _settings.Spacing.CellSize);
+            dc.DrawLine(pen, Point.Add(s, offset), Point.Add(end, offset));
         }
 
         var drawingImage = new DrawingImage(drawingVisualisation.Drawing);
@@ -182,7 +187,7 @@ public partial class MainWindow : Window
 
             var normalizedValue = (solve.CellValue[cell] - minCost) / (maxCost - minCost);
 
-            var color = Color.FromArgb(50,
+            var color = Color.FromArgb(128,
                 (byte)(255 * normalizedValue),
                 (byte)(255 * (1 - normalizedValue)),
                 0);
@@ -261,7 +266,7 @@ public partial class MainWindow : Window
     private void OnGenerateClicked(object sender, RoutedEventArgs e)
     {
         //_viewModel.ResetSolvedPath();
-        _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value, MultiPath.IsChecked.Value);
+        _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value, MultiPath.IsChecked ?? false);
         Draw();
     }
 
