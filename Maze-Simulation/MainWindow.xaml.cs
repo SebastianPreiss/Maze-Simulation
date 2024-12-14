@@ -195,6 +195,7 @@ public partial class MainWindow : Window
 
         foreach (var cell in cells.Take(_viewModel.ToVisualize))
         {
+            if (cell == board[_viewModel.Start ?? new Position()]) continue;
             var point = GetDrawPoint(board, cell, _settings.Spacing.ProcessingSize);
 
             var normalizedValue = (solve.CellValue[cell] - minCost) / (maxCost - minCost);
