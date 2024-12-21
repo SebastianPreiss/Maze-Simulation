@@ -21,6 +21,11 @@ public class Cell(int x, int y)
     public int X => x;
     public int Y => y;
 
+    public override string ToString()
+    {
+        return $"({X}:{Y})";
+    }
+
     private static byte GetIndex(Direction direction)
     {
         return direction switch
