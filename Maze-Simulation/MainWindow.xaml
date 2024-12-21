@@ -16,10 +16,10 @@
             <TabItem Header="Generation">
                 <Grid Background="#FFE5E5E5">
                     <Label Content="Width" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-                    <Slider x:Name="WidthSlider" HorizontalAlignment="Left" Margin="19,36,0,0" VerticalAlignment="Top" Width="148" Minimum="8" Maximum="128" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                    <Slider x:Name="WidthSlider" HorizontalAlignment="Left" Margin="19,36,0,0" VerticalAlignment="Top" Width="148" Minimum="8" Maximum="32" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1"/>
 
                     <Label Content="Height" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"/>
-                    <Slider x:Name="HeightSlider" HorizontalAlignment="Left" Margin="19,85,0,0" VerticalAlignment="Top" Width="148" Minimum="8" Maximum="128" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                    <Slider x:Name="HeightSlider" HorizontalAlignment="Left" Margin="19,85,0,0" VerticalAlignment="Top" Width="148" Minimum="8" Maximum="32" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" IsSnapToTickEnabled="True" TickFrequency="1"/>
 
                     <Label Content="Seed"  HorizontalAlignment="Left" Margin="13,113,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.565,-0.209"/>
                     <TextBox x:Name="Seed" HorizontalAlignment="Left" Margin="18,139,0,0" TextWrapping="Wrap" Text="42" VerticalAlignment="Top" Width="149"/>
@@ -35,9 +35,10 @@
                     <Label Content="Select Algorithm" HorizontalAlignment="Left" Margin="8,12,0,0" VerticalAlignment="Top"/>
                     <ComboBox x:Name="AlgorithmComboBox" HorizontalAlignment="Center" Margin="0,38,0,0" VerticalAlignment="Top" Width="174" SelectedIndex="0">
                         <ComboBoxItem Content="A*"/>
+                        <ComboBoxItem Content="Breadth-First Search" />
                         <ComboBoxItem Content="Hand on wall (left-handed)" />
                         <ComboBoxItem Content="Hand on wall (right-handed)" />
-                        <ComboBoxItem Content="Breadth-First Search" />
+                        
                     </ComboBox>
                     <CheckBox x:Name="VisuSolver" IsChecked="True" Margin="10,70,-10,-70" >Visualize Solver</CheckBox>
                     <Label Content="Visualization Speed" HorizontalAlignment="Left" Margin="6,86,0,0" VerticalAlignment="Top"/>

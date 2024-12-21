@@ -7,78 +7,74 @@ namespace Maze_Simulation.SolvingAlgorithms;
 /// BFS explores all possible paths in a breadth-first manner, guaranteeing the shortest path
 /// in an unweighted grid or maze. The algorithm uses a queue to manage paths and avoids revisiting cells.
 /// </summary>
-public class BfsSolver //: IPathSolver
+public class BfsSolver : IPathSolver
 {
-    public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
+    private Queue<Cell> _processedCells = [];
+    private Dictionary<Cell, double> _score = [];
 
-    private readonly List<(Cell Cell, double Cost)> _processedCells = [];
-    public IEnumerable<(Cell Cell, double Cost)> ProcessedCells => _processedCells;
 
-    private Cell[,]? _cells;
-    private Cell? _start;
-    private Cell? _target;
-
-    /// <summary>
-    /// Initializes the BFS solver with the maze cells and identifies the start and target cells.
-    /// </summary>
-    /// <param name="cells">Two-dimensional array of maze cells.</param>
-    public void InitSolver(Cell[,] cells)
+    public Solve? Solve(Board board, Position start, Position target)
     {
-        _cells = cells;
-        //_start = _cells.Cast<Cell>().First(c => c.IsStart);
-        //_target = _cells.Cast<Cell>().First(c => c.IsTarget);
-        _start = _cells[0, 0];
-        _target = _cells[cells.GetLength(0) - 1, cells.GetLength(1) - 1];
-    }
-
-    /// <summary>
-    /// Executes the Breadth-First Search (BFS) algorithm to find the shortest path from the start cell to the target cell.
-    /// </summary>
-    /// <param name="visualize">If true, enables visualization of the algorithm's progress.</param>
-    /// <returns>
-    /// A list of cells representing the shortest path, or null if no path is found.
-    /// </returns>
-    public async Task<IEnumerable<Cell>> StartSolver(bool visualize, int visualizationSpeed)
-    {
-        if (_cells == null || _start == null || _target == null) return null;
+        var startCell = board[start];
+        var targetCell = board[target];
 
         // Queue for BFS: Each entry contains the current cell and its path so far
         var queue = new Queue<List<Cell>>();
-        queue.Enqueue(new List<Cell> { _start });
+        queue.Enqueue([startCell]);
 
-        // Visited set to avoid revisiting cells
-        var visited = new HashSet<Cell> { _start };
+        _processedCells = [];
+        _score = [];
 
         while (queue.Any())
         {
             // Get the next path to explore
-            var path = queue.Dequeue();
-            var current = path.Last();
+            var cells = queue.Dequeue();
+            var current = cells.Last();
 
-            if (visualize)
-            {
-                _processedCells.Add((current, path.Count));
-                ProcessedCellsUpdated?.Invoke(_processedCells);
-                await Task.Delay(visualizationSpeed);
-            }
+            if (_processedCells.Contains(current)) continue;
 
-            if (current == _target)
+            _processedCells.Enqueue(current);
+            _score[current] = cells.Count;
+
+            if (current == targetCell)
             {
-                _processedCells.Clear();
-                return path;
+                var path = ReconstructPath(cells).ToList();
+                return new Solve(path, start, target, _processedCells, _score);
             }
 
             // Explore neighbors
-            //foreach (var neighbor in _cells.GetNeighbors(current))
-            //{
-            //    if (visited.Contains(neighbor)) continue;
-            //    visited.Add(neighbor);
-            //    var newPath = new List<Cell>(path) { neighbor };
-            //    queue.Enqueue(newPath);
-            //}
+            foreach (var (_, position) in BoardUtils.GetAvailableDirections(board, current, new BoardUtils.NoWallStrategy(), new BoardUtils.FirstNextStrategy()))
+            {
+                var neighbor = board[position];
+
+                if (cells.Contains(neighbor)) continue;
+
+                var newPath = new List<Cell>(cells) { neighbor };
+
+                queue.Enqueue(newPath);
+            }
         }
 
-        // If the queue is empty and no path is found, return null
+        // no solution found!
         return null;
+    }
+
+    private static IEnumerable<Direction> ReconstructPath(IList<Cell> path)
+    {
+        foreach (var cell in path)
+        {
+            if (path.IndexOf(cell) == path.Count - 1) break;
+            yield return GetDirection(cell, path[path.IndexOf(cell) + 1]);
+        }
+    }
+
+    // TODO: Move this method to a shared utility class (also used in A-star)
+    private static Direction GetDirection(Cell start, Cell end)
+    {
+        if (start.X > end.X) return Direction.Left;
+        if (start.X < end.X) return Direction.Right;
+        if (start.Y > end.Y) return Direction.Bottom;
+        if (start.Y < end.Y) return Direction.Top;
+        return Direction.None;
     }
 }

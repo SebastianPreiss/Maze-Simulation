@@ -36,7 +36,8 @@ public partial class MainWindow : Window
         _viewModel.OnBoardChanged += UpdateSettings;
         _viewModel.OnBoardChanged += DrawBoard;
         DataContext = _viewModel;
-        //_viewModel.GenerateBoard("42", 32, 32, true);
+        //_viewModel.GenerateBoard("42", 8, 8, true);
+        //_viewModel.SolveBoard(2);
     }
 
     /// <summary>

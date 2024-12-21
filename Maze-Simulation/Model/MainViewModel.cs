@@ -2,7 +2,6 @@
 
 using Generation;
 using Maze_Simulation.Shared;
-using Shared;
 using SolvingAlgorithms;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -30,7 +29,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public DispatcherTimer Timer { get; private set; }
     public int ToVisualize { get; private set; } = 0;
-    public bool IsRunning => ToVisualize < Solve?.CellValue.Count;
+    public bool IsRunning => ToVisualize < Solve?.ProcessingOrder.Count;
 
     public delegate void BoardEvent(Board board);
     public event BoardEvent OnBoardChanged;
@@ -62,9 +61,9 @@ public class MainViewModel : INotifyPropertyChanged
         Generators.Add(new MazeGenerator());
 
         Solvers.Add(new AStarSolver());
-        //Solvers.Add(new BfsSolver());
-        //Solvers.Add(new HandOnWallSolver { UseLeftHand = true });
-        //Solvers.Add(new HandOnWallSolver { UseLeftHand = false });
+        Solvers.Add(new BfsSolver());
+        Solvers.Add(new HandOnWallSolver(true));
+        Solvers.Add(new HandOnWallSolver(false));
 
         Duration = "0:0.0";
 
@@ -168,6 +167,12 @@ public class MainViewModel : INotifyPropertyChanged
         _stopwatch.Restart();
         Solve = solver.Solve(board, start, target);
         _stopwatch.Stop();
+
+        if (Solve is null)
+        {
+            MessageBox.Show("No path found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
         StartVisualisation();
         Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
     }
