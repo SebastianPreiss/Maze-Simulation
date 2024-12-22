@@ -2,10 +2,10 @@
 
 This project is an interactive application designed for generating and solving mazes. It utilizes the **Depth First Search (DFS)** algorithm for maze generation and supports multiple solving algorithms. The tool provides real-time visualization of the solving processes, making it suitable for educational purposes and testing.
 
-<div style="display: flex; justify-content: space-around;">
-    <img src="./Doku/img/application/generation.gif" alt="generation" style="width: 45%;"/>
-    <img src="./Doku/img/application/solving.gif" alt="solving" style="width: 45%;"/>
-</div>
+| Maze Generation                                   | Maze Solving                                   |
+|---------------------------------------------------|-----------------------------------------------|
+| ![generation](./Doku/img/application/generation.gif) | ![solving](./Doku/img/application/solving.gif) |
+
 
 ## Table of Contents
 
