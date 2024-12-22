@@ -15,9 +15,10 @@ This project is an interactive application designed for generating and solving m
 4. [Solving](#solving)
 5. [Visualization](#visualization)
 6. [Features](#features)
-7. [How to Run](#how-to-run)
-8. [Future Work](#future-work)
-9. [License](#license)
+7. [System Requirements](#system-requirements)
+8. [How to Run](#how-to-run)
+9. [Future Work](#future-work)
+10. [License](#license)
 
 ## Overview
 
