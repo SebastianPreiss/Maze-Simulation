@@ -4,7 +4,7 @@ This project is an interactive application designed for generating and solving m
 
 <div style="display: flex; justify-content: space-around;">
     <img src="./Doku/img/application/generation.gif" alt="generation" style="width: 45%;"/>
-    <img src="./Doku/img/application/solver.gif" alt="solving" style="width: 45%;"/>
+    <img src="./Doku/img/application/solving.gif" alt="solving" style="width: 45%;"/>
 </div>
 
 ## Table of Contents
@@ -144,9 +144,16 @@ Real-time visualization is one of the standout features of this project, offerin
   - **Solution Path**: Clearly marked after solving, ensuring easy readability.
   - **Start/Target Points**: Distinctively styled for quick identification.
 
-- **Interactive Playback Controls**:
+- **Interactive Playback Controls**
 
-  - Adjust the **playback speed** to slow down or speed up the visualization.
+  - **Adjust Playback Speed**:  
+    Use the playback slider to slow down or speed up the visualization, allowing a detailed view of each step or a faster solution.
+
+  - **Mouse Interaction**:
+    - **Set Target**: Right-click on a cell to designate it as the **target position**.
+    - **Set Start**: Left-click on a cell to designate it as the **start position**.
+
+These interactive controls provide flexibility in customizing the solving process and make it easier to test various scenarios dynamically.
 
 ### Educational Benefits
 
