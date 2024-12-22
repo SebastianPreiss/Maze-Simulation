@@ -1,7 +1,7 @@
 ﻿namespace Maze_Simulation.Model;
 
 using Generation;
-using Maze_Simulation.Shared;
+using Shared;
 using SolvingAlgorithms;
 using System.ComponentModel;
 using System.Diagnostics;

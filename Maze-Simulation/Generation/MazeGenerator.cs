@@ -1,6 +1,6 @@
 ﻿namespace Maze_Simulation.Generation;
 
-using Maze_Simulation.Shared;
+using Shared;
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
@@ -23,13 +23,6 @@ public class MazeGenerator : IBoardStrategy
 
     public int Seed { set => _random = new Random(value); }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MazeGenerator"/> class.
-    /// This class uses a depth-first search algorithm to generate a maze and optionally adds multiple paths.
-    /// </summary>
-    public MazeGenerator()
-    {
-    }
 
     /// <summary>
     /// Generates the maze using a depth-first search algorithm. 

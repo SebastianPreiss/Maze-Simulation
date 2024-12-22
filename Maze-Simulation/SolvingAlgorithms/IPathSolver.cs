@@ -2,7 +2,6 @@
 
 using Shared;
 
-
 /// <summary>
 /// Defines the contract for pathfinding algorithms used to solve mazes.
 /// Any pathfinding algorithm (e.g., A*, BFS, DFS) must implement this interface.

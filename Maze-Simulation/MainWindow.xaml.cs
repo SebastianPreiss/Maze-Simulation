@@ -28,7 +28,9 @@ public partial class MainWindow : Window
         _resizeTimer.Tick += (s, e) =>
         {
             _resizeTimer.Stop();
-            Draw();
+            if (_viewModel?.Board == null) return;
+            UpdateSettings(_viewModel.Board);
+            DrawBoard(_viewModel.Board);
         };
 
         _viewModel = new MainViewModel();
