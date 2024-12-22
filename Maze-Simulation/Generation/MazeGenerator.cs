@@ -1,200 +1,115 @@
-﻿using Maze_Simulation.Playground;
+﻿namespace Maze_Simulation.Generation;
 
-namespace Maze_Simulation.Generation
+using Shared;
+using System.Diagnostics.CodeAnalysis;
+
+/// <summary>
+/// Represents a maze generator that utilizes the Depth First Search algorithm to create a maze. 
+/// The generator modifies the walls of the cells to establish paths based on random moves selected 
+/// from available options, starting from a specified starting point.
+/// </summary>
+/// <remarks>
+/// This class implements the <see cref="IBoardStrategy"/> interface and requires a 2D array of cells 
+/// and a seed value for random number generation to initialize the maze generation process.
+/// </remarks>
+public class MazeGenerator : IBoardStrategy
 {
+    private readonly Stack<Cell> _track = new();
+    private readonly Dictionary<Cell, bool> _visited = [];
+    private readonly Dictionary<Cell, bool> _collapsed = [];
+
+    private Board _board = default!;
+    private Random _random = new();
+
+    public int Seed { set => _random = new Random(value); }
+
+
     /// <summary>
-    /// Represents a maze generator that utilizes the Depth First Search algorithm to create a maze. 
-    /// The generator modifies the walls of the cells to establish paths based on random moves selected 
-    /// from available options, starting from a specified starting point.
+    /// Generates the maze using a depth-first search algorithm. 
+    /// It modifies the walls of the cells to create paths, based on the random moves chosen from the available options.
     /// </summary>
-    /// <remarks>
-    /// This class implements the <see cref="IBoardStrategy"/> interface and requires a 2D array of cells 
-    /// and a seed value for random number generation to initialize the maze generation process.
-    /// </remarks>
-    public class MazeGenerator : IBoardStrategy
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if an invalid direction is encountered during generation.</exception>
+    public Board Generate(int width, int height, bool multiPath = false)
     {
-        private readonly bool _multiPath;
-        private readonly Cell[,]? _cells;
-        private readonly Stack<Cell> _track = new();
-        private readonly Random _random;
+        _board = new Board(width, height);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MazeGenerator"/> class.
-        /// This class uses a depth-first search algorithm to generate a maze and optionally adds multiple paths.
-        /// </summary>
-        /// <param name="cells">A reference to the 2D array of <see cref="Cell"/> objects representing the maze.</param>
-        /// <param name="seed">The seed for the random number generator, ensuring reproducibility of the maze structure. Default is 42.</param>
-        /// <param name="multiPath">
-        /// A boolean indicating whether to create multiple paths in the maze. 
-        /// If set to <c>true</c>, additional random connections between cells will be created.
-        /// Default is <c>false</c>.
-        /// </param>
+        //init starting point(might be done by a strategy)
+        var start = new Position(0, 0);
+        _track.Push(_board[start]);
 
-        public MazeGenerator(ref Cell[,]? cells, int seed = 42, bool multiPath = false)
+        while (_track.Count > 0)
         {
-            _cells = cells;
-            _random = new Random(seed);
-            _multiPath = multiPath;
-        }
-
-        /// <summary>
-        /// Resets the maze to its initial state, clearing any modifications made during generation.
-        /// </summary>
-        public void Reset()
-        {
-            _cells.Reset();
-        }
-
-        /// <summary>
-        /// Sets the starting point for generation at the specified coordinates.
-        /// </summary>
-        /// <param name="x">The x-coordinate of the starting point.</param>
-        /// <param name="y">The y-coordinate of the starting point.</param>
-
-        public void SetStartingPoint(int x, int y)
-        {
-            _track.Clear();
-            _track.Push(_cells[x, y]);
-        }
-
-        /// <summary>
-        /// Generates the maze using a depth-first search algorithm. 
-        /// It modifies the walls of the cells to create paths, based on the random moves chosen from the available options.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown if an invalid move is encountered during generation.</exception>
-        public void Generate()
-        {
-            while (_track.Any())
+            var current = _track.Peek();
+            _visited[current] = true;
+            if (!TryGetNextMove(current, out var move, out var next))
             {
-                var current = _track.Peek();
-                current.IsVisited = true;
-                if (!TryGetNextMove(current, out var move))
-                {
-                    _track.Pop();
-                    continue;
-                }
-                var (x, y) = GetNewPosition(current, move);
-                var nextCell = _cells[x, y];
-                _track.Push(nextCell);
-                switch (move)
-                {
-                    case Move.Top:
-                        current.Walls[Cell.Top] = false;
-                        nextCell.Walls[Cell.Bottom] = false;
-                        nextCell.Available.Remove(Move.Bottom);
-                        break;
-                    case Move.Right:
-                        current.Walls[Cell.Right] = false;
-                        nextCell.Walls[Cell.Left] = false;
-                        nextCell.Available.Remove(Move.Left);
-                        break;
-                    case Move.Bottom:
-                        current.Walls[Cell.Bottom] = false;
-                        nextCell.Walls[Cell.Top] = false;
-                        nextCell.Available.Remove(Move.Top);
-                        break;
-                    case Move.Left:
-                        current.Walls[Cell.Left] = false;
-                        nextCell.Walls[Cell.Right] = false;
-                        nextCell.Available.Remove(Move.Right);
-                        break;
-                    case Move.None:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                _collapsed[current] = true;
+                _track.Pop();
+                continue;
             }
-            if (_multiPath) AddRandomConnections();
-            foreach (var cell in _cells)
+            _track.Push(next);
+            ConnectCells(current, next, move);
+        }
+        if (multiPath) AddRandomConnections();
+        return _board;
+    }
+
+    /// <summary>
+    /// Adds random connections to create additional paths in the maze.
+    /// </summary>
+    private void AddRandomConnections()
+    {
+        const int magicNumber = 5;
+
+        var numberOfCells = _board.Width * _board.Height;
+        var numberOfConnections = numberOfCells / magicNumber;
+        Direction[] directions = [Direction.Top, Direction.Right, Direction.Bottom, Direction.Left];
+
+        for (var i = 0; i < numberOfConnections; i++)
+        {
+            var x = _random.Next(_board.Width);
+            var y = _random.Next(_board.Height);
+            var current = _board[new Position(x, y)];
+            var direction = directions[_random.Next(directions.Length)];
+
+            if (BoardUtils.TryMove(_board, current, direction, out var next))
             {
-                cell.IsVisited = false;
+                ConnectCells(current, _board[next], direction);
             }
         }
+    }
 
-        /// <summary>
-        /// Adds random connections to create additional paths in the maze.
-        /// </summary>
-        private void AddRandomConnections()
+    private bool TryGetNextMove(Cell cell, out Direction direction, [NotNullWhen(true)] out Cell? next)
+    {
+        direction = Direction.None;
+        next = default;
+        if (_collapsed.GetValueOrDefault(cell, false)) return false;
+        foreach (var (dir, position) in BoardUtils.GetAvailableDirections(_board, cell, new BoardUtils.WallStrategy(), new BoardUtils.RandomNextStrategy(_random)))
         {
-            if (_cells is null) return;
-            var numberOfCells = _cells.GetLength(0) * _cells.GetLength(1);
-            var numberOfConnections = numberOfCells / 5;
-
-            for (var i = 0; i < numberOfConnections; i++)
-            {
-                var x = _random.Next(_cells.GetLength(0));
-                var y = _random.Next(_cells.GetLength(1));
-
-                var cell = _cells[x, y];
-                var moves = Enum.GetValues(typeof(Move)).Cast<Move>().Where(m => m != Move.None).ToList();
-                var randomMove = moves[_random.Next(moves.Count)];
-                var (newX, newY) = GetNewPosition(cell, randomMove);
-
-                if (newX >= 0 && newX < _cells.GetLength(0) && newY >= 0 && newY < _cells.GetLength(1))
-                {
-                    var neighbor = _cells[newX, newY];
-                    switch (randomMove)
-                    {
-                        case Move.Top:
-                            cell.Walls[Cell.Top] = false;
-                            neighbor.Walls[Cell.Bottom] = false;
-                            break;
-                        case Move.Right:
-                            cell.Walls[Cell.Right] = false;
-                            neighbor.Walls[Cell.Left] = false;
-                            break;
-                        case Move.Bottom:
-                            cell.Walls[Cell.Bottom] = false;
-                            neighbor.Walls[Cell.Top] = false;
-                            break;
-                        case Move.Left:
-                            cell.Walls[Cell.Left] = false;
-                            neighbor.Walls[Cell.Right] = false;
-                            break;
-                        case Move.None:
-                            break;
-                        default:
-                            throw new ArgumentException($"Invalid move \"{randomMove}\"");
-                    }
-                }
-            }
+            next = _board[position];
+            direction = dir;
+            if (!_collapsed.GetValueOrDefault(next, false) && !_visited.GetValueOrDefault(next, false)) return true;
         }
+        return false;
+    }
 
-        private bool TryGetNextMove(Cell cell, out Move move)
+    private static void ConnectCells(Cell a, Cell b, Direction connection)
+    {
+        var opening = GetOpposite(connection);
+
+        a[connection] = false;
+        b[opening] = false;
+    }
+
+    private static Direction GetOpposite(Direction connection)
+    {
+        return connection switch
         {
-            move = Move.None;
-            if (cell.IsCollapsed) return false;
-            while (!cell.IsCollapsed)
-            {
-                var moveIndex = _random.Next(cell.Available.Count());
-                move = cell.Available[moveIndex];
-                cell.Available.RemoveAt(moveIndex);
-                var (newX, newY) = GetNewPosition(cell, move);
-                if (newX >= _cells.GetLength(0) || newX < 0) continue;
-                if (newY >= _cells.GetLength(1) || newY < 0) continue;
-                if (!_cells[newX, newY].IsCollapsed && !_cells[newX, newY].IsVisited) return true;
-            }
-            return false;
-        }
-
-        private static (int x, int y) GetNewPosition(Cell current, Move move)
-        {
-            var (offsetX, offsetY) = GetOffset(move);
-            var newX = current.X + offsetX;
-            var newY = current.Y + offsetY;
-            return (newX, newY);
-        }
-
-        private static (int x, int y) GetOffset(Move move)
-        {
-            return move switch
-            {
-                Move.Top => (0, 1),
-                Move.Right => (1, 0),
-                Move.Bottom => (0, -1),
-                Move.Left => (-1, 0),
-                _ => throw new ArgumentException($"Invalid move \"{move}\"")
-            };
-        }
+            Direction.Top => Direction.Bottom,
+            Direction.Right => Direction.Left,
+            Direction.Bottom => Direction.Top,
+            Direction.Left => Direction.Right,
+            _ => throw new ArgumentException($"Invalid connection \"{connection}\"")
+        };
     }
 }

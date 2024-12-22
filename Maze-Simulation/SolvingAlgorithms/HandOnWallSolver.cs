@@ -1,149 +1,121 @@
-﻿using Maze_Simulation.Playground;
+﻿using Maze_Simulation.Shared;
+using System.Diagnostics.CodeAnalysis;
 
-namespace Maze_Simulation.SolvingAlgorithms
+namespace Maze_Simulation.SolvingAlgorithms;
+
+/// <summary>
+/// Implements the "Hand on Wall" algorithm to solve a maze.
+/// </summary>
+public class HandOnWallSolver(bool leftHanded) : IPathSolver
 {
-    /// <summary>
-    /// Implements the "Hand on Wall" algorithm to solve a maze.
-    /// </summary>
-    public class HandOnWallSolver : IPathSolver
+    private Queue<Cell> _processedCells = [];
+    private Dictionary<Cell, double> _score = [];
+    private Dictionary<Cell, bool> _visited = [];
+
+    public Solve? Solve(Board board, Position start, Position target)
     {
-        public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
-        public bool UseLeftHand { get; set; } = false;
+        var startCell = board[start];
+        var targetCell = board[target];
 
-        private readonly List<(Cell Cell, double Cost)> _processedCells = [];
-        public IEnumerable<(Cell Cell, double Cost)> ProcessedCells => _processedCells;
-        private Cell[,]? _cells;
-        private Cell? _start;
-        private Cell? _target;
-        private Move _currentDirection;
+        var directions = new Stack<Direction>();
+        var path = new Stack<Cell>();
+        path.Push(startCell);
 
-        /// <summary>
-        /// Initializes the solver with the maze cells.
-        /// </summary>
-        /// <param name="cells">Cells of the maze.</param>
-        public void InitSolver(Cell[,] cells)
+        _processedCells = [];
+        _score = [];
+        _visited = [];
+
+        while (path.Count > 0)
         {
-            _cells = cells;
-            _start = _cells.Cast<Cell>().First(c => c.IsStart);
-            _target = _cells.Cast<Cell>().First(c => c.IsTarget);
-        }
+            var current = path.Peek();
+            _visited[current] = true;
+            _processedCells.Enqueue(current);
+            _score[current] = 1;
 
-        /// <summary>
-        /// Starts the "Hand on wall"-Algorithmus.
-        /// </summary>
-        /// <returns>A list of cells representing the path from the start to the target. Returns null if no path can be found.</returns>
-        public async Task<IEnumerable<Cell>> StartSolver(bool visualize, int visualizationSpeed)
-        {
-            if (_cells == null || _start == null || _target == null) return null;
 
-            var path = new List<Cell> { _start };
-            var current = _start;
-            _currentDirection = UseLeftHand ? Move.Right : Move.Left;
-
-            while (current != _target)
+            if (current == targetCell)
             {
-                // Try to turn right first
-                var newDirection = UseLeftHand ? TurnLeft(_currentDirection) : TurnRight(_currentDirection);
-
-                if (CanMove(current, newDirection))
-                {
-                    // If we can move, update the direction and move
-                    _currentDirection = newDirection;
-                    current = MoveTo(current, _currentDirection);
-                }
-                else if (CanMove(current, _currentDirection))
-                {
-                    // Otherwise, continue straight
-                    current = MoveTo(current, _currentDirection);
-                }
-                else
-                {
-                    // Otherwise, turn left
-                    _currentDirection = TurnLeft(_currentDirection);
-                }
-
-                path.Add(current);
-
-                if (path.Count > _cells.GetLength(0) * _cells.GetLength(1)) return null;
-
-
-                if (!visualize) continue;
-                await Task.Delay(visualizationSpeed);
-                _processedCells.Add((current, 0));
-                ProcessedCellsUpdated?.Invoke(_processedCells);
+                return new Solve(directions.Reverse().ToList(), start, target, _processedCells, _score);
             }
-            _processedCells.Clear();
-            return path;
-        }
 
-        private bool CanMove(Cell cell, Move direction)
-        {
-            if (direction == Move.None) return false;
-
-            var (dx, dy) = GetDirectionOffset(direction);
-            var newX = cell.X + dx;
-            var newY = cell.Y + dy;
-
-            // Check boundaries
-            if (newX < 0 || newX >= _cells.GetLength(0) || newY < 0 || newY >= _cells.GetLength(1))
-                return false;
-
-            // Check for walls
-            return !HasWall(cell, direction);
-        }
-
-        private Cell MoveTo(Cell cell, Move direction)
-        {
-            var (dx, dy) = GetDirectionOffset(direction);
-            return _cells[cell.X + dx, cell.Y + dy];
-        }
-
-        private static Move TurnRight(Move current)
-        {
-            return current switch
+            if (!TryGetMove(board, current, out var move))
             {
-                Move.Top => Move.Right,
-                Move.Right => Move.Bottom,
-                Move.Bottom => Move.Left,
-                Move.Left => Move.Top,
-                _ => Move.None
-            };
-        }
+                // backtrack when no moves are available
+                path.Pop();
+                directions.TryPop(out var _);
+                continue;
+            }
 
-        private static Move TurnLeft(Move current)
-        {
-            return current switch
-            {
-                Move.Top => Move.Left,
-                Move.Left => Move.Bottom,
-                Move.Bottom => Move.Right,
-                Move.Right => Move.Top,
-                _ => Move.None
-            };
+            var (direction, next) = move.Value;
+            path.Push(next);
+            directions.Push(direction);
         }
+        // no solution found!
+        return null;
+    }
 
-        private static (int dx, int dy) GetDirectionOffset(Move direction)
-        {
-            return direction switch
-            {
-                Move.Top => (0, 1),
-                Move.Right => (1, 0),
-                Move.Bottom => (0, -1),
-                Move.Left => (-1, 0),
-                _ => (0, 0)
-            };
-        }
+    private bool TryGetMove(Board board, Cell cell, [NotNullWhen(true)] out (Direction, Cell)? move)
+    {
+        move = null;
+        BoardUtils.IAvailableStrategy strategy = leftHanded ? new LeftHandStrategy() : new RightHandStrategy();
+        var moves = BoardUtils.GetAvailableDirections(board, cell, strategy, new BoardUtils.FirstNextStrategy()).ToList();
 
-        private static bool HasWall(Cell cell, Move direction)
+        foreach (var (direction, _) in moves)
         {
-            return direction switch
-            {
-                Move.Top => cell.Walls[Cell.Top],
-                Move.Right => cell.Walls[Cell.Right],
-                Move.Bottom => cell.Walls[Cell.Bottom],
-                Move.Left => cell.Walls[Cell.Left],
-                _ => true
-            };
+            if (!BoardUtils.TryMove(board, cell, direction, out var nextPos)) continue;
+            var next = board[nextPos];
+            if (_visited.GetValueOrDefault(next, false)) continue;
+            move = (direction, next);
+            return true;
         }
+        return false;
+    }
+
+    class RightHandStrategy : BoardUtils.IAvailableStrategy
+    {
+        public IEnumerable<Direction> GetAvailable(Cell cell)
+        {
+            Direction[] toCheck = [Direction.Top, Direction.Right, Direction.Bottom, Direction.Left, Direction.Bottom, Direction.Right, Direction.Top];
+            var available = new List<Direction>();
+
+            foreach (var direction in toCheck)
+            {
+                var expectedWall = Rotate(direction);
+                if (cell[direction]) continue;
+                if (!(cell[expectedWall] || available.Contains(expectedWall))) continue;
+                available.Add(direction);
+            }
+            return available;
+        }
+    }
+
+    class LeftHandStrategy : BoardUtils.IAvailableStrategy
+    {
+        public IEnumerable<Direction> GetAvailable(Cell cell)
+        {
+            Direction[] toCheck = [Direction.Top, Direction.Left, Direction.Bottom, Direction.Right, Direction.Bottom, Direction.Left, Direction.Top];
+            var available = new List<Direction>();
+
+            foreach (var direction in toCheck)
+            {
+                var expectedWall = Rotate(direction, false);
+                if (cell[direction]) continue;
+                if (!(cell[expectedWall] || available.Contains(expectedWall))) continue;
+                available.Add(direction);
+            }
+            return available;
+        }
+    }
+
+    private static Direction Rotate(Direction direction, bool clockwise = true)
+    {
+        return direction switch
+        {
+            Direction.Top => clockwise ? Direction.Right : Direction.Left,
+            Direction.Right => clockwise ? Direction.Bottom : Direction.Top,
+            Direction.Bottom => clockwise ? Direction.Left : Direction.Right,
+            Direction.Left => clockwise ? Direction.Top : Direction.Bottom,
+            _ => Direction.None
+        };
     }
 }

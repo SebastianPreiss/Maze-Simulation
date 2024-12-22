@@ -1,33 +1,19 @@
-﻿using Maze_Simulation.Playground;
+﻿namespace Maze_Simulation.SolvingAlgorithms;
 
-namespace Maze_Simulation.SolvingAlgorithms
+using Shared;
+
+/// <summary>
+/// Defines the contract for pathfinding algorithms used to solve mazes.
+/// Any pathfinding algorithm (e.g., A*, BFS, DFS) must implement this interface.
+/// </summary>
+public interface IPathSolver
 {
     /// <summary>
-    /// Interface for pathfinding algorithms used to solve mazes.
+    /// Solves the maze using the specified pathfinding algorithm.
     /// </summary>
-    public interface IPathSolver
-    {
-        /// <summary>
-        /// List of processed cells and their associated costs during pathfinding.
-        /// </summary>
-        public IEnumerable<(Cell Cell, double Cost)> ProcessedCells { get; }
-
-        /// <summary>
-        /// Event triggered whenever the list of processed cells is updated.
-        /// </summary>
-        public event Action<IEnumerable<(Cell Cell, double Cost)>>? ProcessedCellsUpdated;
-
-        /// <summary>
-        /// Initializes the algorithm with the maze's cells.
-        /// </summary>
-        /// <param name="cells">The cells of the maze.</param>
-        public void InitSolver(Cell[,] cells);
-
-        /// <summary>
-        /// Starts the algorithm to solve the maze.
-        /// </summary>
-        /// <param name="visualize">Indicates whether the solving process should be visualized.</param>
-        /// <returns>A list of cells representing the found path, or <c>null</c> if no path was found.</returns>
-        public Task<IEnumerable<Cell>> StartSolver(bool visualize, int visualizationSpeed);
-    }
+    /// <param name="board">The maze board to be solved.</param>
+    /// <param name="start">The starting position in the maze.</param>
+    /// <param name="target">The target position to reach in the maze.</param>
+    /// <returns>A <see cref="Solve"/> object containing the path from start to target, or null if no path is found.</returns>
+    Solve? Solve(Board board, Position start, Position target);
 }
