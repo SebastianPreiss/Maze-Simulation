@@ -290,7 +290,7 @@ public partial class MainWindow : Window
     /// <param name="e">The event data.</param>
     private void OnGenerateClicked(object sender, RoutedEventArgs e)
     {
-        //_viewModel.ResetSolvedPath();
+        _viewModel.ResetSolver();
         _viewModel.GenerateBoard(Seed.Text, (int)WidthSlider.Value, (int)HeightSlider.Value, MultiPath.IsChecked ?? false);
         Draw();
     }

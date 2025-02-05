@@ -177,6 +177,12 @@ public class MainViewModel : INotifyPropertyChanged
         Duration = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff");
     }
 
+    public void ResetSolver()
+    {
+        Solve = null;
+        StopVisualisation();
+    }
+
     private void StartVisualisation()
     {
         Timer.Start();
